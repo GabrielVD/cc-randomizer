@@ -3,40 +3,96 @@ export type Risk = {
   level: 1|2|3;
 };
 
+type FlatRisk = {
+  pos: number;  // index of the single non-zero digit (0-14)
+  val: number;  // value at that position (1-30)
+  level: 1|2|3;
+};
+
 type RiskGroup = {
-  risks: Risk[];
+  risks: FlatRisk[];
+};
+
+const DIGITS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const CODE_LEN = 15;
+
+const CHAR_TO_VAL = new Uint8Array(128);
+for (let i = 0; i < DIGITS.length; i++) {
+  CHAR_TO_VAL[DIGITS.charCodeAt(i)] = i;
 }
 
-const riskData = buildRisks();
+const RISK_DATA = buildRisks();
 
 export function generateCode(): Risk {
-  let risk = pick(riskData.key.risks);
-  return risk;
+  const digits = new Uint8Array(CODE_LEN);
+
+  const key = pick(RISK_DATA.key.risks);
+  digits[key.pos] = key.val;
+  let level = key.level;
+
+  for (const group of RISK_DATA.free) {
+    if (cryptoRandom() < 0.5) {
+      const r = pick(group.risks);
+      digits[r.pos] += r.val;
+      level += r.level;
+    }
+  }
+
+  for (const group of RISK_DATA.locked) {
+    if (cryptoRandom() < 0.5) {
+      const r = pick(group.risks);
+      digits[r.pos] += r.val;
+      level += r.level;
+    }
+  }
+
+  let code = '';
+  for (let i = 0; i < CODE_LEN; i++) {
+    code += DIGITS[digits[i]];
+  }
+
+  return { code, level: level as 1|2|3 };
 }
 
-function sumCode(a: string, b: string): string {
-  const digits = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  let result = '';
-  for (let i = 0; i < a.length; i++) {
-    const sum = digits.indexOf(a[i]) + digits.indexOf(b[i]);
-    result += digits[sum];
+// --- Random number generation (batched) ---
+
+const randomPool = new Uint32Array(64);
+let randomIndex = randomPool.length; // forces initial fill
+
+function cryptoRandom(): number {
+  if (randomIndex >= randomPool.length) {
+    crypto.getRandomValues(randomPool);
+    randomIndex = 0;
   }
-  return result;
+  return randomPool[randomIndex++] / 0x100000000;
 }
 
 function pick<T>(list: T[]): T {
-  const index = Math.floor(cryptoRandom() * list.length);
-  return list[index];
+  return list[Math.floor(cryptoRandom() * list.length)];
 }
 
-function cryptoRandom(): number {
-  const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
-  return array[0] / (0xFFFFFFFF + 1); // normalize to [0, 1)
+// --- Data setup ---
+
+type RawRisk = { code: string; level: 1|2|3 };
+type RawGroup = { risks: RawRisk[] };
+
+/** Convert a single-position code string into a flat {pos, val} risk. */
+function toFlat(r: RawRisk): FlatRisk {
+  for (let i = 0; i < r.code.length; i++) {
+    const val = CHAR_TO_VAL[r.code.charCodeAt(i)];
+    if (val !== 0) {
+      return { pos: i, val, level: r.level };
+    }
+  }
+  return { pos: 0, val: 0, level: r.level };
+}
+
+function convert(groups: RawGroup[]): RiskGroup[] {
+  return groups.map(g => ({ risks: g.risks.map(toFlat) }));
 }
 
 function buildRisks() {
-  const free: RiskGroup[] = [
+  const free: RawGroup[] = [
     {
       risks: [
       { code: '000000000000001', level: 1 },
@@ -106,16 +162,16 @@ function buildRisks() {
     ]}
   ];
 
-  const key: RiskGroup = {
+  const key: RawGroup = {
     risks: [
     { code: '000000010000000', level: 3 },
     { code: '000000080000000', level: 3 }
   ]};
 
-  const locked: RiskGroup[] = [
+  const locked: RawGroup[] = [
     {
       risks: [
-      { code: '0000000H0000000', level: 1 }
+      { code: '0000000G0000000', level: 1 }
     ]},
     {
       risks: [
@@ -151,8 +207,8 @@ function buildRisks() {
   ];
 
   return {
-    free,
-    key,
-    locked
+    free: convert(free),
+    key: { risks: key.risks.map(toFlat) },
+    locked: convert(locked)
   };
 }
