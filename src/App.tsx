@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import RiskGrid from './RiskGrid'
 import { generateCode, type Difficulty, type Risk } from './generateCode'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
@@ -14,6 +15,7 @@ function App() {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6">
+      <RiskGrid />
       <div className="flex gap-2" role="group" aria-label="Difficulty">
         {DIFFICULTIES.map(({ key, label }) => {
           const selected = key === difficulty
