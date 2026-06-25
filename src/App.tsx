@@ -14,7 +14,7 @@ function App() {
   const [useKey, setUseKey] = useState(true)
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-6">
+    <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40">
       <RiskGrid />
       <div className="flex gap-2" role="group" aria-label="Difficulty">
         {DIFFICULTIES.map(({ key, label }) => {

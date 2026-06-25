@@ -32,7 +32,7 @@ export default function RiskGrid() {
   } = useDragScroll()
 
   return (
-    <div className="flex w-full max-w-[640px] gap-2">
+    <div className="flex w-max max-w-full gap-2">
       {/* Fixed row headers */}
       <div
         className="flex shrink-0 flex-col"
