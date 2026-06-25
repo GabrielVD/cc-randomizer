@@ -32,17 +32,30 @@ for (let i = 0; i < DIGITS.length; i++) {
   CHAR_TO_VAL[DIGITS.charCodeAt(i)] = i;
 }
 
+export type GenerateOptions = {
+  difficulty?: Difficulty;
+  useKey?: boolean;
+};
+
 const RISK_DATA = buildRisks();
 
-export function generateCode(difficulty: Difficulty = 'medium'): Risk {
+export function generateCode(options: GenerateOptions = {}): Risk {
+  const difficulty = options.difficulty ?? 'medium';
+  const useKey = options.useKey ?? true;
   const digits = new Uint8Array(CODE_LEN);
   const p = DIFFICULTY_PROBABILITY[difficulty];
 
-  const key = pick(RISK_DATA.key.risks);
-  digits[key.pos] = key.val;
-  let level = key.level;
+  let level = 0;
+  if (useKey) {
+    const key = pick(RISK_DATA.key.risks);
+    digits[key.pos] = key.val;
+    level = key.level;
+  }
 
-  for (const group of RISK_DATA.free.concat(RISK_DATA.locked)) {
+  const groups = useKey
+    ? RISK_DATA.free.concat(RISK_DATA.locked)
+    : RISK_DATA.free;
+  for (const group of groups) {
     if (cryptoRandom() < p) {
       const r = pick(group.risks);
       digits[r.pos] += r.val;

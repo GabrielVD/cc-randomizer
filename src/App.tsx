@@ -10,6 +10,7 @@ const DIFFICULTIES: { key: Difficulty; label: string }[] = [
 function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [risk, setRisk] = useState<Risk | null>(null)
+  const [useKey, setUseKey] = useState(true)
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6">
@@ -37,10 +38,34 @@ function App() {
           )
         })}
       </div>
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-white/70">
+        <span>Key</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={useKey}
+          aria-label="Key"
+          className={[
+            'relative h-6 w-11 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+            useKey ? 'bg-randomize' : 'bg-white/20',
+          ].join(' ')}
+          onClick={() => {
+            setUseKey(v => !v)
+            setRisk(null)
+          }}
+        >
+          <span
+            className={[
+              'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform',
+              useKey ? 'translate-x-5' : 'translate-x-0',
+            ].join(' ')}
+          />
+        </button>
+      </label>
       <button
         type="button"
         className="cursor-pointer rounded-lg bg-randomize px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-randomize-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        onClick={() => setRisk(generateCode(difficulty))}
+        onClick={() => setRisk(generateCode({ difficulty, useKey }))}
       >
         Randomize
       </button>
