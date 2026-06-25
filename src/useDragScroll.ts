@@ -108,8 +108,8 @@ export function useDragScroll() {
         const next = scroll + v * frame
         // The moment we reach the edge, snap to it and stop — never overshoot
         // back into the content (which would clip cells at the edge).
-        const reachedEdge =
-          (target === 0 && next >= 0) || (target === max && next <= max)
+        const fromLeft = scroll < 0
+        const reachedEdge = fromLeft ? next >= 0 : next <= max
         if (
           reachedEdge ||
           (Math.abs(next - target) < SETTLE_THRESHOLD && Math.abs(v) < STOP_THRESHOLD)
