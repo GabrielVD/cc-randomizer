@@ -1,20 +1,31 @@
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
 export type Risk = {
   code: string;
-  level: 1|2|3;
+  level: number;
 };
 
 type FlatRisk = {
   pos: number;  // index of the single non-zero digit (0-14)
   val: number;  // value at that position (1-30)
-  level: 1|2|3;
+  level: number;
 };
 
 type RiskGroup = {
   risks: FlatRisk[];
 };
 
+type RawRisk = { code: string; level: number };
+type RawGroup = { risks: RawRisk[] };
+
 const DIGITS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const CODE_LEN = 15;
+
+const DIFFICULTY_PROBABILITY: Record<Difficulty, number> = {
+  easy: 0.3,
+  medium: 0.5,
+  hard: 0.75,
+};
 
 const CHAR_TO_VAL = new Uint8Array(128);
 for (let i = 0; i < DIGITS.length; i++) {
@@ -23,23 +34,16 @@ for (let i = 0; i < DIGITS.length; i++) {
 
 const RISK_DATA = buildRisks();
 
-export function generateCode(): Risk {
+export function generateCode(difficulty: Difficulty = 'medium'): Risk {
   const digits = new Uint8Array(CODE_LEN);
+  const p = DIFFICULTY_PROBABILITY[difficulty];
 
   const key = pick(RISK_DATA.key.risks);
   digits[key.pos] = key.val;
   let level = key.level;
 
-  for (const group of RISK_DATA.free) {
-    if (cryptoRandom() < 0.5) {
-      const r = pick(group.risks);
-      digits[r.pos] += r.val;
-      level += r.level;
-    }
-  }
-
-  for (const group of RISK_DATA.locked) {
-    if (cryptoRandom() < 0.5) {
+  for (const group of RISK_DATA.free.concat(RISK_DATA.locked)) {
+    if (cryptoRandom() < p) {
       const r = pick(group.risks);
       digits[r.pos] += r.val;
       level += r.level;
@@ -51,7 +55,7 @@ export function generateCode(): Risk {
     code += DIGITS[digits[i]];
   }
 
-  return { code, level: level as 1|2|3 };
+  return { code, level };
 }
 
 // --- Random number generation (batched) ---
@@ -70,11 +74,6 @@ function cryptoRandom(): number {
 function pick<T>(list: T[]): T {
   return list[Math.floor(cryptoRandom() * list.length)];
 }
-
-// --- Data setup ---
-
-type RawRisk = { code: string; level: 1|2|3 };
-type RawGroup = { risks: RawRisk[] };
 
 /** Convert a single-position code string into a flat {pos, val} risk. */
 function toFlat(r: RawRisk): FlatRisk {
