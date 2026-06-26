@@ -1,13 +1,12 @@
-export type CellState = 'empty' | 'selected' | 'unselected' | 'conflict' | 'locked' | 'banned'
+import { riskData, type RiskData, type RiskEdge } from "./risks"
 
-export type Edge = 'none' | 'short' | 'long'
+export type CellState = 'empty' | 'selected' | 'unselected' | 'conflict' | 'locked' | 'banned'
 
 type CellProps = {
   height?: number
   className?: string
   state?: CellState
   riskCode?: string
-  edge?: Edge
 }
 
 const STATE_STYLES: Record<CellState, string> = {
@@ -19,21 +18,25 @@ const STATE_STYLES: Record<CellState, string> = {
   banned: 'bg-neutral-800 ring-2 ring-neutral-500',
 }
 
-const EDGE_LENGTHS: Record<Edge, number> = {
+const EDGE_LENGTHS: Record<RiskEdge, number> = {
   none: 0,
   short: 1,
-  long: 4
+  long: 4,
+  left: 4
 }
+
+const RISK_DATA_MAP = riskDataMap()
 
 export default function Cell({
   height = 45,
   className = '',
   state = 'empty',
-  riskCode,
-  edge = 'none',
+  riskCode
 }: CellProps) {
   const hasRisk = state !== 'empty' && riskCode !== undefined
-  const edgeLength = EDGE_LENGTHS[edge] * height * .45
+  const riskData = hasRisk ? RISK_DATA_MAP[riskCode] : undefined
+  const edgeLength = hasRisk ?
+    EDGE_LENGTHS[riskData?.edge || 'none'] * height * .45 : 0
   const showEdge = edgeLength > 0
 
   return (
@@ -63,4 +66,14 @@ export default function Cell({
       )}
     </div>
   )
+}
+
+function riskDataMap(): Record<string, RiskData> {
+  const risks = riskData();
+  const map: Record<string, RiskData> = {};
+  const allRisks = [...risks.free, risks.key, ...risks.locked];
+  allRisks.flatMap((group) => group.risks)
+    .forEach((risk) => { map[risk.code] = risk; });
+
+  return map;
 }
