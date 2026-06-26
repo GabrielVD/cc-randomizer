@@ -106,8 +106,7 @@ export function useDragScroll() {
         v += (target - scroll) * SPRING_K * frame
         v *= Math.pow(SPRING_DAMPING, frame)
         const next = scroll + v * frame
-        // The moment we reach the edge, snap to it and stop — never overshoot
-        // back into the content (which would clip cells at the edge).
+        // The moment we reach the edge, snap to it and stop
         const fromLeft = scroll < 0
         const reachedEdge = fromLeft ? next >= 0 : next <= max
         if (

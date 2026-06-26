@@ -2,7 +2,7 @@ import Cell from './Cell'
 import { useDragScroll } from './useDragScroll'
 
 const ROWS = 3
-const CELLS_PER_ROW = 22
+const CELLS_PER_ROW = 23
 const GRID_HEIGHT = 600
 
 const BASE_CELL_HEIGHT = 45
