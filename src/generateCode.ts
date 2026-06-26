@@ -119,7 +119,8 @@ function buildRisks() {
     {
       risks: [
       { code: '000000000000020', level: 1 },
-      { code: '000000000000040', level: 2 }
+      { code: '000000000000040', level: 2 },
+      { code: '000000000000080', level: 3 }
     ]},
     {
       risks: [
@@ -162,6 +163,10 @@ function buildRisks() {
     ]},
     {
       risks: [
+      { code: '000000001000000', level: 1 }
+    ]},
+    {
+      risks: [
       { code: '000000000G00000', level: 3 }
     ]},
     {
@@ -191,6 +196,10 @@ function buildRisks() {
     ]},
     {
       risks: [
+      { code: '000040000000000', level: 2 }
+    ]},
+    {
+      risks: [
       { code: '000000400000000', level: 1 },
       { code: '000000800000000', level: 2 }
     ]},
@@ -215,6 +224,11 @@ function buildRisks() {
       risks: [
       { code: '008000000000000', level: 1 },
       { code: '00G000000000000', level: 2 }
+    ]},
+    {
+      risks: [
+      { code: '040000000000000', level: 2 },
+      { code: '080000000000000', level: 3 }
     ]}
   ];
 
