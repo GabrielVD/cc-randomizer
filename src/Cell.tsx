@@ -10,9 +10,9 @@ type CellProps = {
 }
 
 const STATE_STYLES: Record<CellState, string> = {
-  empty: 'bg-neutral-600',
-  unselected: 'bg-neutral-600 ring-1 ring-white/10',
-  selected: 'bg-neutral-500 ring-2 ring-white',
+  empty: 'bg-[#212121]',
+  unselected: 'bg-[#141414] ring-1 ring-white/10',
+  selected: 'bg-[#9c0508] ring-2 ring-white',
   conflict: 'bg-neutral-600 ring-2 ring-red-500',
   locked: 'bg-neutral-600 ring-2 ring-blue-500',
   banned: 'bg-neutral-800 ring-2 ring-neutral-500',

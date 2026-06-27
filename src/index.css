@@ -1,8 +1,8 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-randomize: #e0202f;
-  --color-randomize-hover: #c41a26;
+  --color-randomize: #c0001c;
+  --color-randomize-hover: #d04055;
 }
 
 html {
