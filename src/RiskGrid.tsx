@@ -1,5 +1,11 @@
-import Cell from './Cell'
+import { useMemo } from 'react'
+import Cell, { type CellState } from './Cell'
 import { useDragScroll } from './useDragScroll'
+
+type RiskGridProps = {
+  picks?: string[]
+  conflicts?: string[]
+}
 
 const ROWS = 3
 const GRID_HEIGHT = 600
@@ -20,7 +26,7 @@ const ROW_HEIGHT = CELL_HEIGHT + 2 * ROW_PADDING
 
 const rowStyle = { height: `${ROW_HEIGHT}px`, padding: `${ROW_PADDING}px`, gap: `${CELL_GAP}px` }
 
-export default function RiskGrid() {
+export default function RiskGrid({ picks, conflicts }: RiskGridProps) {
   const {
     containerRef,
     contentRef,
@@ -29,6 +35,9 @@ export default function RiskGrid() {
     onPointerUp,
     onPointerCancel,
   } = useDragScroll()
+
+  const pickSet = useMemo(() => new Set(picks), [picks])
+  const conflictSet = useMemo(() => new Set(conflicts), [conflicts])
 
   return (
     <div className="flex w-max max-w-full gap-2">
@@ -64,9 +73,16 @@ export default function RiskGrid() {
               className="flex rounded-xl border border-white/10 bg-white/5"
               style={rowStyle}
             >
-              {rowCodes.map((riskCode, col) => (
-                <Cell key={col} height={CELL_HEIGHT} riskCode={riskCode ?? undefined} />
-              ))}
+              {rowCodes.map((riskCode, col) => {
+                let state: CellState | undefined
+                if (riskCode) {
+                  if (pickSet.has(riskCode)) state = 'selected'
+                  else if (conflictSet.has(riskCode)) state = 'conflict'
+                }
+                return (
+                  <Cell key={col} height={CELL_HEIGHT} riskCode={riskCode ?? undefined} state={state} />
+                )
+              })}
             </div>
           ))}
         </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import RiskGrid from './RiskGrid'
-import { generateCode, type Difficulty, type Risk } from './generateCode'
+import { generateCode, type Difficulty, type GeneratedRisk } from './generateCode'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
   { key: 'easy', label: 'Easy' },
@@ -10,12 +10,12 @@ const DIFFICULTIES: { key: Difficulty; label: string }[] = [
 
 function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
-  const [risk, setRisk] = useState<Risk | null>(null)
+  const [risk, setRisk] = useState<GeneratedRisk | null>(null)
   const [useKey, setUseKey] = useState(true)
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40">
-      <RiskGrid />
+      <RiskGrid picks={risk?.picks} conflicts={risk?.conflicts} />
       <div className="flex gap-2" role="group" aria-label="Difficulty">
         {DIFFICULTIES.map(({ key, label }) => {
           const selected = key === difficulty

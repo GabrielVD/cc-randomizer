@@ -2,9 +2,11 @@ import { riskData, type RiskData, type RiskGroupData } from "./risks";
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
-export type Risk = {
+export type GeneratedRisk = {
   code: string;
   level: number;
+  picks: string[];
+  conflicts: string[];
 };
 
 export type GenerateOptions = {
@@ -16,6 +18,7 @@ type FlatRisk = {
   pos: number;  // index of the single non-zero digit (0-14)
   val: number;  // value at that position (1-30)
   level: number;
+  code: string; // original single-position code string
 };
 
 type RiskGroup = {
@@ -38,17 +41,25 @@ for (let i = 0; i < DIGITS.length; i++) {
 
 const RISK_DATA = buildRisks();
 
-export function generateCode(options: GenerateOptions = {}): Risk {
+export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
   const difficulty = options.difficulty ?? 'medium';
   const useKey = options.useKey ?? true;
   const digits = new Uint8Array(CODE_LEN);
   const p = DIFFICULTY_PROBABILITY[difficulty];
 
+  const picks: string[] = [];
+  const conflicts: string[] = [];
+
   let level = 0;
   if (useKey) {
-    const key = pick(RISK_DATA.key.risks);
+    const group = RISK_DATA.key;
+    const key = pick(group.risks);
     digits[key.pos] = key.val;
     level = key.level;
+    picks.push(key.code);
+    for (const r of group.risks) {
+      if (r !== key) conflicts.push(r.code);
+    }
   }
 
   const groups = useKey
@@ -59,6 +70,10 @@ export function generateCode(options: GenerateOptions = {}): Risk {
       const r = pick(group.risks);
       digits[r.pos] += r.val;
       level += r.level;
+      picks.push(r.code);
+      for (const other of group.risks) {
+        if (other !== r) conflicts.push(other.code);
+      }
     }
   }
 
@@ -67,7 +82,7 @@ export function generateCode(options: GenerateOptions = {}): Risk {
     code += DIGITS[digits[i]];
   }
 
-  return { code, level };
+  return { code, level, picks, conflicts };
 }
 
 // --- Random number generation (batched) ---
@@ -92,10 +107,10 @@ function toFlat(r: RiskData): FlatRisk {
   for (let i = 0; i < r.code.length; i++) {
     const val = CHAR_TO_VAL[r.code.charCodeAt(i)];
     if (val !== 0) {
-      return { pos: i, val, level: r.level };
+      return { pos: i, val, level: r.level, code: r.code };
     }
   }
-  return { pos: 0, val: 0, level: r.level };
+  return { pos: 0, val: 0, level: r.level, code: r.code };
 }
 
 function convert(groups: RiskGroupData[]): RiskGroup[] {
