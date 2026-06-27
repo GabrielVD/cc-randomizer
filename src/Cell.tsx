@@ -21,7 +21,7 @@ const STATE_STYLES: Record<CellState, string> = {
 const EDGE_LENGTHS: Record<RiskEdge, number> = {
   none: 0,
   short: 1,
-  long: 4,
+  long: 4.4,
   left: .5
 }
 
@@ -64,13 +64,13 @@ export default function Cell({
       {showEdge && (
         riskData?.edge === 'left' ? (
           <div
-            className="absolute left-0 top-1/2 h-3 -translate-x-[calc(100%+5px)] -translate-y-1/2 rounded-full bg-white/60"
+            className="absolute left-0 top-1/2 h-3 -translate-x-[calc(100%+5px)] -translate-y-1/2 rounded-full bg-white"
             style={{ width: `${edgeLength}px` }}
             aria-hidden="true"
           />
         ) : (
           <div
-            className="absolute left-1/2 top-0 w-3 -translate-x-1/2 -translate-y-[calc(100%+5px)] rounded-full bg-white/60"
+            className="absolute left-1/2 top-0 w-3 -translate-x-1/2 -translate-y-[calc(100%+5px)] rounded-full bg-white"
             style={{ height: `${edgeLength}px` }}
             aria-hidden="true"
           />
