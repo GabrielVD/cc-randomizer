@@ -22,7 +22,7 @@ const EDGE_LENGTHS: Record<RiskEdge, number> = {
   none: 0,
   short: 1,
   long: 4,
-  left: 4
+  left: .5
 }
 
 const RISK_DATA_MAP = riskDataMap()
@@ -30,14 +30,18 @@ const RISK_DATA_MAP = riskDataMap()
 export default function Cell({
   height = 45,
   className = '',
-  state = 'empty',
-  riskCode
+  riskCode,
+  state = 'empty'
 }: CellProps) {
-  const hasRisk = state !== 'empty' && riskCode !== undefined
+  const hasRisk = riskCode !== undefined
   const riskData = hasRisk ? RISK_DATA_MAP[riskCode] : undefined
   const edgeLength = hasRisk ?
     EDGE_LENGTHS[riskData?.edge || 'none'] * height * .45 : 0
   const showEdge = edgeLength > 0
+
+  if (state === 'empty' && hasRisk) {
+    state = 'unselected'
+  }
 
   return (
     <div
@@ -58,11 +62,19 @@ export default function Cell({
         </div>
       )}
       {showEdge && (
-        <div
-          className="absolute left-1/2 top-0 w-4 -translate-x-1/2 -translate-y-[calc(100%+5px)] rounded-full bg-white/60"
-          style={{ height: `${edgeLength}px` }}
-          aria-hidden="true"
-        />
+        riskData?.edge === 'left' ? (
+          <div
+            className="absolute left-0 top-1/2 h-3 -translate-x-[calc(100%+5px)] -translate-y-1/2 rounded-full bg-white/60"
+            style={{ width: `${edgeLength}px` }}
+            aria-hidden="true"
+          />
+        ) : (
+          <div
+            className="absolute left-1/2 top-0 w-3 -translate-x-1/2 -translate-y-[calc(100%+5px)] rounded-full bg-white/60"
+            style={{ height: `${edgeLength}px` }}
+            aria-hidden="true"
+          />
+        )
       )}
     </div>
   )
