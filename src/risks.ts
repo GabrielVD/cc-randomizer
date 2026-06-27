@@ -62,11 +62,11 @@ export function riskData() {
     ]},
     {
       risks: [
-      { code: '000000001000000', level: 1 }
+      { code: '000000000G00000', level: 3 }
     ]},
     {
       risks: [
-      { code: '000000000G00000', level: 3 }
+      { code: '000000001000000', level: 1 }
     ]},
     {
       risks: [
@@ -95,10 +95,6 @@ export function riskData() {
     ]},
     {
       risks: [
-      { code: '000040000000000', level: 2 }
-    ]},
-    {
-      risks: [
       { code: '000000400000000', level: 1 },
       { code: '000000800000000', level: 2, edge: 'short' }
     ]},
@@ -118,6 +114,10 @@ export function riskData() {
       { code: '0000G0000000000', level: 1, edge: 'left' },
       { code: '000400000000000', level: 1, edge: 'left' },
       { code: '001000000000000', level: 1, edge: 'left' }
+    ]},
+    {
+      risks: [
+      { code: '000040000000000', level: 2 }
     ]},
     {
       risks: [
