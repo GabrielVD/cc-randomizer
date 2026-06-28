@@ -168,9 +168,33 @@ function App() {
         Randomize
       </button>
       <div className={`flex flex-col items-center gap-2 ${risk ? 'visible' : 'invisible'}`}>
-        <p className="m-0 font-mono text-xl tracking-wider text-white">
-          {risk?.code ?? '\u00A0'}
-        </p>
+        <div className="relative">
+          <p className="m-0 font-mono text-xl tracking-wider text-white">
+            {risk?.code ?? '\u00A0'}
+          </p>
+          <button
+            type="button"
+            aria-label="Clear"
+            className="absolute left-full top-1/2 ml-3 -translate-y-1/2 cursor-pointer text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            onClick={() => {
+              setRisk(null)
+              setLockedCodes([])
+              setBannedCodes([])
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              className="h-5 w-5"
+            >
+              <path d="M5 5l10 10M15 5L5 15" />
+            </svg>
+          </button>
+        </div>
         <p className="m-0 text-sm text-white/70">
           {risk ? `Level ${risk.level}` : '\u00A0'}
         </p>
