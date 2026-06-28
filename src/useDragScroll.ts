@@ -43,6 +43,7 @@ type State = {
 export function useDragScroll() {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const movedRef = useRef(false)
   const scrollRef = useRef(0)
   const stateRef = useRef<State>({
     pointerId: -1,
@@ -154,12 +155,12 @@ export function useDragScroll() {
       const now = performance.now()
       s.active = true
       s.moved = false
+      movedRef.current = false
       s.pointerId = e.pointerId
       s.startX = e.clientX
       s.startScroll = scrollRef.current
       s.velocity = 0
       s.samples = [{ t: now, x: scrollRef.current }]
-      container.setPointerCapture(e.pointerId)
     },
     [cancelRaf],
   )
@@ -170,7 +171,12 @@ export function useDragScroll() {
       if (!s.active || e.pointerId !== s.pointerId) return
       const delta = s.startX - e.clientX
       if (!s.moved && Math.abs(delta) < 3) return
+      if (!s.moved) {
+        const container = containerRef.current
+        container?.setPointerCapture(s.pointerId)
+      }
       s.moved = true
+      movedRef.current = true
 
       const max = s.maxScroll
       let target = s.startScroll + delta
@@ -249,6 +255,7 @@ export function useDragScroll() {
   return {
     containerRef,
     contentRef,
+    movedRef,
     onPointerDown,
     onPointerMove,
     onPointerUp,

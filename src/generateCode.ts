@@ -12,6 +12,8 @@ export type GeneratedRisk = {
 export type GenerateOptions = {
   difficulty?: Difficulty;
   useKey?: boolean;
+  locked?: string[];
+  banned?: string[];
 };
 
 type FlatRisk = {
@@ -40,10 +42,18 @@ for (let i = 0; i < DIGITS.length; i++) {
 }
 
 const RISK_DATA = buildRisks();
+const CODE_MAP: Record<string, FlatRisk> = {};
+for (const group of [...RISK_DATA.free, RISK_DATA.key, ...RISK_DATA.locked]) {
+  for (const r of group.risks) {
+    CODE_MAP[r.code] = r;
+  }
+}
 
 export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
   const difficulty = options.difficulty ?? 'medium';
   const useKey = options.useKey ?? true;
+  const lockedSet = new Set(options.locked ?? []);
+  const bannedSet = new Set(options.banned ?? []);
   const digits = new Uint8Array(CODE_LEN);
   const p = DIFFICULTY_PROBABILITY[difficulty];
 
@@ -53,12 +63,26 @@ export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
   let level = 0;
   if (useKey) {
     const group = RISK_DATA.key;
-    const key = pick(group.risks);
-    digits[key.pos] = key.val;
-    level = key.level;
-    picks.push(key.code);
-    for (const r of group.risks) {
-      if (r !== key) conflicts.push(r.code);
+    const lockedInGroup = group.risks.filter(r => lockedSet.has(r.code));
+    if (lockedInGroup.length > 0) {
+      const key = lockedInGroup[0];
+      digits[key.pos] = key.val;
+      level = key.level;
+      picks.push(key.code);
+      for (const r of group.risks) {
+        if (r !== key) conflicts.push(r.code);
+      }
+    } else {
+      const available = group.risks.filter(r => !bannedSet.has(r.code));
+      if (available.length > 0) {
+        const key = pick(available);
+        digits[key.pos] = key.val;
+        level = key.level;
+        picks.push(key.code);
+        for (const r of available) {
+          if (r !== key) conflicts.push(r.code);
+        }
+      }
     }
   }
 
@@ -66,23 +90,59 @@ export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
     ? RISK_DATA.free.concat(RISK_DATA.locked)
     : RISK_DATA.free;
   for (const group of groups) {
-    if (cryptoRandom() < p) {
-      const r = pick(group.risks);
-      digits[r.pos] += r.val;
-      level += r.level;
-      picks.push(r.code);
+    const lockedInGroup = group.risks.filter(r => lockedSet.has(r.code));
+    if (lockedInGroup.length > 0) {
+      for (const locked of lockedInGroup) {
+        digits[locked.pos] += locked.val;
+        level += locked.level;
+        picks.push(locked.code);
+      }
       for (const other of group.risks) {
-        if (other !== r) conflicts.push(other.code);
+        if (!lockedSet.has(other.code)) conflicts.push(other.code);
+      }
+    } else {
+      const available = group.risks.filter(r => !bannedSet.has(r.code));
+      if (available.length > 0 && cryptoRandom() < p) {
+        const r = pick(available);
+        digits[r.pos] += r.val;
+        level += r.level;
+        picks.push(r.code);
+        for (const other of available) {
+          if (other !== r) conflicts.push(other.code);
+        }
       }
     }
   }
 
-  let code = '';
-  for (let i = 0; i < CODE_LEN; i++) {
-    code += DIGITS[digits[i]];
-  }
+  return { code: buildDigits(digits), level, picks, conflicts };
+}
 
-  return { code, level, picks, conflicts };
+/** Add a risk's digit and level to an existing generated code. */
+export function addRiskToCode(risk: GeneratedRisk, code: string): GeneratedRisk {
+  const flat = CODE_MAP[code];
+  if (!flat) return risk;
+  const digits = parseDigits(risk.code);
+  digits[flat.pos] += flat.val;
+  return {
+    code: buildDigits(digits),
+    level: risk.level + flat.level,
+    picks: [...risk.picks, code],
+    conflicts: risk.conflicts,
+  };
+}
+
+/** Subtract a risk's digit and level from an existing generated code. */
+export function removeRiskFromCode(risk: GeneratedRisk, code: string): GeneratedRisk {
+  const flat = CODE_MAP[code];
+  if (!flat) return risk;
+  const digits = parseDigits(risk.code);
+  digits[flat.pos] -= flat.val;
+  return {
+    code: buildDigits(digits),
+    level: risk.level - flat.level,
+    picks: risk.picks.filter(c => c !== code),
+    conflicts: risk.conflicts,
+  };
 }
 
 // --- Random number generation (batched) ---
@@ -100,6 +160,22 @@ function cryptoRandom(): number {
 
 function pick<T>(list: T[]): T {
   return list[Math.floor(cryptoRandom() * list.length)];
+}
+
+function parseDigits(code: string): number[] {
+  const digits = new Array(CODE_LEN);
+  for (let i = 0; i < CODE_LEN; i++) {
+    digits[i] = CHAR_TO_VAL[code.charCodeAt(i)];
+  }
+  return digits;
+}
+
+function buildDigits(digits: ArrayLike<number>): string {
+  let code = '';
+  for (let i = 0; i < CODE_LEN; i++) {
+    code += DIGITS[digits[i]];
+  }
+  return code;
 }
 
 /** Convert a single-position code string into a flat {pos, val} risk. */

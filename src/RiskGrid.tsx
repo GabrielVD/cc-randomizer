@@ -1,10 +1,14 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import Cell, { type CellState } from './Cell'
 import { useDragScroll } from './useDragScroll'
 
 type RiskGridProps = {
   picks?: string[]
   conflicts?: string[]
+  lockedCodes?: string[]
+  bannedCodes?: string[]
+  lockedConflictSet?: Set<string>
+  onCellClick?: (code: string) => void
 }
 
 const ROWS = 3
@@ -26,10 +30,18 @@ const ROW_HEIGHT = CELL_HEIGHT + 2 * ROW_PADDING
 
 const rowStyle = { height: `${ROW_HEIGHT}px`, padding: `${ROW_PADDING}px`, gap: `${CELL_GAP}px` }
 
-export default function RiskGrid({ picks, conflicts }: RiskGridProps) {
+export default function RiskGrid({
+  picks,
+  conflicts,
+  lockedCodes,
+  bannedCodes,
+  lockedConflictSet,
+  onCellClick,
+}: RiskGridProps) {
   const {
     containerRef,
     contentRef,
+    movedRef,
     onPointerDown,
     onPointerMove,
     onPointerUp,
@@ -38,6 +50,14 @@ export default function RiskGrid({ picks, conflicts }: RiskGridProps) {
 
   const pickSet = useMemo(() => new Set(picks), [picks])
   const conflictSet = useMemo(() => new Set(conflicts), [conflicts])
+  const lockedSet = useMemo(() => new Set(lockedCodes), [lockedCodes])
+  const bannedSet = useMemo(() => new Set(bannedCodes), [bannedCodes])
+  const lockedConflicts = lockedConflictSet ?? EMPTY_SET
+
+  const handleCellClick = useCallback((code: string) => {
+    if (movedRef.current) return
+    onCellClick?.(code)
+  }, [movedRef, onCellClick])
 
   return (
     <div className="flex w-max max-w-full gap-2">
@@ -76,11 +96,21 @@ export default function RiskGrid({ picks, conflicts }: RiskGridProps) {
               {rowCodes.map((riskCode, col) => {
                 let state: CellState | undefined
                 if (riskCode) {
-                  if (pickSet.has(riskCode)) state = 'selected'
+                  if (lockedSet.has(riskCode)) state = 'locked'
+                  else if (lockedConflicts.has(riskCode)) state = 'conflict'
+                  else if (bannedSet.has(riskCode)) state = 'banned'
+                  else if (pickSet.has(riskCode)) state = 'selected'
                   else if (conflictSet.has(riskCode)) state = 'conflict'
+                  else state = 'unselected'
                 }
                 return (
-                  <Cell key={col} height={CELL_HEIGHT} riskCode={riskCode ?? undefined} state={state} />
+                  <Cell
+                    key={col}
+                    height={CELL_HEIGHT}
+                    riskCode={riskCode ?? undefined}
+                    state={state}
+                    onClick={handleCellClick}
+                  />
                 )
               })}
             </div>
@@ -90,6 +120,8 @@ export default function RiskGrid({ picks, conflicts }: RiskGridProps) {
     </div>
   )
 }
+
+const EMPTY_SET = new Set<string>()
 
 function riskCodes() {
   return [

@@ -1,6 +1,14 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import RiskGrid from './RiskGrid'
-import { generateCode, type Difficulty, type GeneratedRisk } from './generateCode'
+import { type CellState } from './Cell'
+import { findRiskGroup } from './risks'
+import {
+  addRiskToCode,
+  generateCode,
+  removeRiskFromCode,
+  type Difficulty,
+  type GeneratedRisk,
+} from './generateCode'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
   { key: 'easy', label: 'Easy' },
@@ -12,10 +20,98 @@ function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [risk, setRisk] = useState<GeneratedRisk | null>(null)
   const [useKey, setUseKey] = useState(true)
+  const [lockedCodes, setLockedCodes] = useState<string[]>([])
+  const [bannedCodes, setBannedCodes] = useState<string[]>([])
+
+  const lockedConflictSet = useMemo(() => {
+    const set = new Set<string>()
+    const lockedSet = new Set(lockedCodes)
+    for (const lockedCode of lockedCodes) {
+      const group = findRiskGroup(lockedCode)
+      if (!group) continue
+      for (const r of group.risks) {
+        if (r.code !== lockedCode && !lockedSet.has(r.code)) {
+          set.add(r.code)
+        }
+      }
+    }
+    return set
+  }, [lockedCodes])
+
+  const handleCellClick = useCallback((code: string) => {
+    const lockedSet = new Set(lockedCodes)
+    const bannedSet = new Set(bannedCodes)
+    const pickSet = new Set(risk?.picks)
+    const conflictSet = new Set(risk?.conflicts)
+
+    let currentState: CellState
+    if (lockedSet.has(code)) currentState = 'locked'
+    else if (lockedConflictSet.has(code)) currentState = 'conflict'
+    else if (bannedSet.has(code)) currentState = 'banned'
+    else if (pickSet.has(code)) currentState = 'selected'
+    else if (conflictSet.has(code)) currentState = 'conflict'
+    else currentState = 'unselected'
+
+    let newState: CellState
+    if (currentState === 'unselected' || currentState === 'selected') newState = 'banned'
+    else if (currentState === 'banned') newState = 'locked'
+    else if (currentState === 'locked') newState = 'unselected'
+    else return
+
+    const newLocked = new Set(lockedSet)
+    const newBanned = new Set(bannedSet)
+    let newRisk = risk
+
+    const group = findRiskGroup(code)
+    const otherGroupCodes = group?.risks
+      .filter(r => r.code !== code)
+      .map(r => r.code) ?? []
+
+    if (newState === 'banned') {
+      newBanned.add(code)
+      if (currentState === 'selected' && newRisk) {
+        newRisk = removeRiskFromCode(newRisk, code)
+        newRisk = {
+          ...newRisk,
+          conflicts: newRisk.conflicts.filter(c => !otherGroupCodes.includes(c)),
+        }
+      }
+    } else if (newState === 'locked') {
+      newBanned.delete(code)
+      newLocked.add(code)
+      for (const c of otherGroupCodes) {
+        newBanned.delete(c)
+      }
+      if (newRisk) {
+        newRisk = addRiskToCode(newRisk, code)
+      }
+    } else {
+      // locked → unselected
+      newLocked.delete(code)
+      if (newRisk) {
+        newRisk = removeRiskFromCode(newRisk, code)
+        newRisk = {
+          ...newRisk,
+          conflicts: newRisk.conflicts.filter(c => !otherGroupCodes.includes(c)),
+        }
+      }
+    }
+
+    setLockedCodes([...newLocked])
+    setBannedCodes([...newBanned])
+    setRisk(newRisk)
+  }, [lockedCodes, bannedCodes, risk, lockedConflictSet])
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40">
-      <RiskGrid picks={risk?.picks} conflicts={risk?.conflicts} />
+      <RiskGrid
+        picks={risk?.picks}
+        conflicts={risk?.conflicts}
+        lockedCodes={lockedCodes}
+        bannedCodes={bannedCodes}
+        lockedConflictSet={lockedConflictSet}
+        onCellClick={handleCellClick}
+      />
       <div className="flex gap-2" role="group" aria-label="Difficulty">
         {DIFFICULTIES.map(({ key, label }) => {
           const selected = key === difficulty
@@ -67,7 +163,7 @@ function App() {
       <button
         type="button"
         className="cursor-pointer rounded-lg bg-randomize px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-randomize-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        onClick={() => setRisk(generateCode({ difficulty, useKey }))}
+        onClick={() => setRisk(generateCode({ difficulty, useKey, locked: lockedCodes, banned: bannedCodes }))}
       >
         Randomize
       </button>

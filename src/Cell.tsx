@@ -7,6 +7,7 @@ type CellProps = {
   className?: string
   state?: CellState
   riskCode?: string
+  onClick?: (riskCode: string) => void
 }
 
 const STATE_STYLES: Record<CellState, string> = {
@@ -31,7 +32,8 @@ export default function Cell({
   height = 45,
   className = '',
   riskCode,
-  state = 'empty'
+  state = 'empty',
+  onClick,
 }: CellProps) {
   const hasRisk = riskCode !== undefined
   const riskData = hasRisk ? RISK_DATA_MAP[riskCode] : undefined
@@ -43,10 +45,13 @@ export default function Cell({
     state = 'unselected'
   }
 
+  const clickable = hasRisk && state !== 'conflict'
+
   return (
     <div
-      className={`relative shrink-0 rounded-md transition-colors ${STATE_STYLES[state]} ${className}`}
+      className={`relative shrink-0 rounded-md transition-colors ${STATE_STYLES[state]} ${clickable ? 'cursor-pointer' : ''} ${className}`}
       style={{ aspectRatio: '7 / 9', height: `${height}px` }}
+      onClick={clickable && riskCode ? () => onClick?.(riskCode) : undefined}
     >
       {hasRisk && (
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-md p-1">

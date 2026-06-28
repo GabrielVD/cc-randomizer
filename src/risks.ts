@@ -133,3 +133,9 @@ export function riskData() {
 
   return { free, key, locked };
 }
+
+export function findRiskGroup(code: string): RiskGroupData | undefined {
+  const data = riskData();
+  const allGroups = [...data.free, data.key, ...data.locked];
+  return allGroups.find(group => group.risks.some(r => r.code === code));
+}
