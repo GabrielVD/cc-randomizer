@@ -1,4 +1,5 @@
 import { riskData, type RiskData, type RiskEdge } from "./risks"
+import riskImages from "./riskImages"
 
 export type CellState = 'empty' | 'selected' | 'unselected' | 'conflict' | 'locked' | 'banned'
 
@@ -37,6 +38,7 @@ export default function Cell({
 }: CellProps) {
   const hasRisk = riskCode !== undefined
   const riskData = hasRisk ? RISK_DATA_MAP[riskCode] : undefined
+  const image = hasRisk ? riskImages[riskCode!] : undefined
   const edgeLength = hasRisk ?
     EDGE_LENGTHS[riskData?.edge || 'none'] * height * .45 : 0
   const showEdge = edgeLength > 0
@@ -55,10 +57,18 @@ export default function Cell({
     >
       {hasRisk && (
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-md p-1">
-          {/* TODO: replace with per-riskCode image */}
-          <span className="break-all text-center font-mono text-[10px] leading-tight text-white/80">
-            {riskCode}
-          </span>
+          {image ? (
+            <img
+              src={image}
+              alt={riskCode}
+              className="object-contain"
+              draggable={false}
+            />
+          ) : (
+            <span className="break-all text-center font-mono text-[10px] leading-tight text-white/80">
+              {riskCode}
+            </span>
+          )}
         </div>
       )}
       {state === 'banned' && (
