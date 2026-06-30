@@ -83,6 +83,11 @@ function App() {
         newBanned.delete(c)
       }
       if (newRisk) {
+        for (const c of otherGroupCodes) {
+          if (pickSet.has(c)) {
+            newRisk = removeRiskFromCode(newRisk, c)
+          }
+        }
         newRisk = addRiskToCode(newRisk, code)
       }
     } else {
