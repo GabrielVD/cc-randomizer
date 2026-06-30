@@ -48,34 +48,37 @@ export default function Cell({
   }
 
   const clickable = hasRisk && state !== 'conflict'
+  const dimmed = state === 'conflict'
 
   return (
     <div
-      className={`relative shrink-0 rounded-md transition-colors ${STATE_STYLES[state]} ${clickable ? 'cursor-pointer' : ''} ${className}`}
+      className={`relative shrink-0 ${clickable ? 'cursor-pointer' : ''} ${className}`}
       style={{ aspectRatio: '7 / 9', height: `${height}px` }}
       onClick={clickable && riskCode ? () => onClick?.(riskCode) : undefined}
     >
-      {hasRisk && (
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-md p-1">
-          {image ? (
-            <img
-              src={image}
-              alt={riskCode}
-              className="object-contain"
-              draggable={false}
-            />
-          ) : (
-            <span className="break-all text-center font-mono text-[10px] leading-tight text-white/80">
-              {riskCode}
-            </span>
-          )}
-        </div>
-      )}
-      {state === 'banned' && (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-md">
-          <div className="absolute left-1/2 top-1/2 h-0.5 w-[200%] -translate-x-1/2 -translate-y-1/2 rotate-45 bg-neutral-400" />
-        </div>
-      )}
+      <div className={`absolute inset-0 rounded-md transition-colors ${STATE_STYLES[state]} ${dimmed ? 'opacity-30' : ''}`}>
+        {hasRisk && (
+          <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-md p-1">
+            {image ? (
+              <img
+                src={image}
+                alt={riskCode}
+                className="object-contain"
+                draggable={false}
+              />
+            ) : (
+              <span className="break-all text-center font-mono text-[10px] leading-tight text-white/80">
+                {riskCode}
+              </span>
+            )}
+          </div>
+        )}
+        {state === 'banned' && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-md">
+            <div className="absolute left-1/2 top-1/2 h-0.5 w-[200%] -translate-x-1/2 -translate-y-1/2 rotate-45 bg-neutral-400" />
+          </div>
+        )}
+      </div>
       {showEdge && (
         riskData?.edge === 'left' ? (
           <div
