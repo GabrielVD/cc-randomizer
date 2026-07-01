@@ -71,7 +71,7 @@ export default function Cell({
       onMouseLeave={() => setHovered(false)}
       aria-describedby={hovered && tooltip ? tooltipId : undefined}
     >
-      <div className={`absolute inset-0 rounded-md transition-colors ${STATE_STYLES[state]} ${dimmed ? 'opacity-30' : ''}`}>
+      <div className={`absolute inset-0 rounded-md transition-[background-color,opacity] ${STATE_STYLES[state]} ${dimmed ? 'opacity-30' : ''}`}>
         {hasRisk && (
           <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-md p-1">
             {image ? (
