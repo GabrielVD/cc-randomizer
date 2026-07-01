@@ -1,8 +1,9 @@
 import { useId, useRef, useState } from 'react'
-import { riskData, type RiskData, type RiskEdge } from "./risks"
+import { getKeyCodes, riskData, type RiskData, type RiskEdge } from "./risks"
 import riskImages from "./riskImages"
 import riskTooltips from "./riskTooltips"
 import Tooltip from "./Tooltip"
+import keyIcon from "./assets/key.svg"
 
 export type CellState = 'empty' | 'selected' | 'unselected' | 'conflict' | 'locked' | 'banned'
 
@@ -31,6 +32,7 @@ const EDGE_LENGTHS: Record<RiskEdge, number> = {
 }
 
 const RISK_DATA_MAP = riskDataMap()
+const KEY_CODES = new Set(getKeyCodes())
 
 export default function Cell({
   height = 45,
@@ -49,6 +51,7 @@ export default function Cell({
     EDGE_LENGTHS[riskData?.edge || 'none'] * height * .45 : 0
   const showEdge = edgeLength > 0
   const tooltip = hasRisk ? riskTooltips[riskCode!] : undefined
+  const isKey = hasRisk && KEY_CODES.has(riskCode!)
 
   if (state === 'empty' && hasRisk) {
     state = 'unselected'
@@ -88,6 +91,18 @@ export default function Cell({
         {state === 'banned' && (
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-md">
             <div className="absolute left-1/2 top-1/2 h-0.5 w-[200%] -translate-x-1/2 -translate-y-1/2 rotate-45 bg-neutral-400" />
+          </div>
+        )}
+        {isKey && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-md">
+            <img
+              src={keyIcon}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="absolute bottom-1 -left-2"
+              style={{ height: `${height * 0.22}px` }}
+            />
           </div>
         )}
       </div>

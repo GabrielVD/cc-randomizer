@@ -224,7 +224,7 @@ function App() {
           aria-label="Key"
           className={[
             'relative h-6 w-11 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
-            useKey ? 'bg-white/50' : 'bg-white/20',
+            useKey ? 'bg-[#bb9900]' : 'bg-white/20',
           ].join(' ')}
           onClick={() => {
             const next = !useKey
