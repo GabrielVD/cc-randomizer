@@ -247,15 +247,24 @@ function App() {
         >
           Randomize
         </button>
-        <button
-          type="button"
-          aria-label={shareStatus === 'idle' ? 'Share' : shareStatus === 'copied' ? 'Copied' : 'Shared'}
-          className="absolute left-full top-1/2 ml-3 flex -translate-y-1/2 cursor-pointer items-center gap-2 rounded-lg bg-white/10 px-5 py-3 text-lg font-semibold text-white transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          onClick={handleShare}
-        >
-          {shareStatus === 'idle' ? <Share2 className="h-5 w-5" /> : <Check className="h-5 w-5" />}
-          {shareStatus === 'idle' ? 'Share' : shareStatus === 'copied' ? 'Copied!' : 'Shared!'}
-        </button>
+        {shareStatus === 'idle' ? (
+          <button
+            type="button"
+            aria-label="Share"
+            className="absolute left-full top-1/2 ml-5 flex -translate-y-1/2 cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            onClick={handleShare}
+          >
+            <Share2 className="h-7 w-7" />
+          </button>
+        ) : (
+          <span
+            aria-label={shareStatus === 'copied' ? 'Copied' : 'Shared'}
+            className="absolute left-full top-1/2 ml-3 flex -translate-y-1/2 items-center gap-2 text-lg font-semibold text-white"
+          >
+            <Check className="h-5 w-5" />
+            {shareStatus === 'copied' ? 'Copied!' : 'Shared!'}
+          </span>
+        )}
       </div>
       <div className={`flex flex-col items-center gap-2 ${risk ? 'visible' : 'invisible'}`}>
         <div className="relative">
