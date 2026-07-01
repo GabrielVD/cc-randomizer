@@ -74,8 +74,14 @@ export default function RiskGrid({
         {Array.from({ length: ROWS }, (_, i) => (
           <div
             key={i}
-            className="flex items-center justify-center rounded-lg bg-white/5 text-sm font-semibold text-white/70"
-            style={{ height: `${ROW_HEIGHT}px`, width: '2rem' }}
+            className="flex items-center justify-center bg-gradient-to-br from-white/15 to-white/5 text-2xl font-bold text-white/80"
+            style={{
+              height: `${ROW_HEIGHT}px`,
+              width: '3.5rem',
+              paddingRight: '0.75rem',
+              clipPath:
+                'polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%)',
+            }}
           >
             {i + 1}
           </div>
