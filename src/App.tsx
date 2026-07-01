@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Share2 } from 'lucide-react'
+import { Check, Share2, X } from 'lucide-react'
 import RiskGrid from './RiskGrid'
 import { type CellState } from './Cell'
 import { findRiskGroup, getKeyAndExtraCodes, getKeyCodes } from './risks'
@@ -174,7 +174,7 @@ function App() {
   }, [])
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40">
+    <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40 py-12">
       <header className="flex flex-col items-center gap-2">
         <h1 className="m-0 text-3xl font-bold tracking-tight text-white">CC Randomizer</h1>
         <p className="m-0 max-w-prose text-center text-sm text-white/60">
@@ -202,7 +202,7 @@ function App() {
               className={[
                 'cursor-pointer rounded-lg px-5 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
                 selected
-                  ? 'bg-randomize text-white hover:bg-randomize-hover'
+                  ? 'bg-white text-black hover:bg-white/90'
                   : 'bg-white/10 text-white/70 hover:bg-white/20',
               ].join(' ')}
               onClick={() => {
@@ -224,7 +224,7 @@ function App() {
           aria-label="Key"
           className={[
             'relative h-6 w-11 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
-            useKey ? 'bg-randomize' : 'bg-white/20',
+            useKey ? 'bg-white/50' : 'bg-white/20',
           ].join(' ')}
           onClick={() => {
             const next = !useKey
@@ -287,17 +287,7 @@ function App() {
               setBannedCodes([])
             }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              className="h-5 w-5"
-            >
-              <path d="M5 5l10 10M15 5L5 15" />
-            </svg>
+            <X className="h-5 w-5" />
           </button>
         </div>
         <p className="m-0 text-sm text-white/70">
