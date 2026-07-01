@@ -108,17 +108,31 @@ export default function Cell({
       </div>
       {showEdge && (
         riskData?.edge === 'left' ? (
-          <div
-            className="absolute left-0 top-1/2 h-3 -translate-x-[calc(100%+5px)] -translate-y-1/2 rounded-full bg-white"
-            style={{ width: `${edgeLength}px` }}
+          <svg
+            className="absolute left-0 top-1/2 -translate-x-[calc(100%+5px)] -translate-y-1/2"
+            width={edgeLength}
+            height={12}
+            viewBox={`0 0 ${edgeLength} 12`}
             aria-hidden="true"
-          />
+          >
+            <path
+              d={`M0 0 L0 12 Q${edgeLength * 0.4} 6 ${edgeLength / 2} 7 Q${edgeLength * 0.6} 6 ${edgeLength} 12 L${edgeLength} 0 Q${edgeLength * 0.6} 6 ${edgeLength / 2} 5 Q${edgeLength * 0.4} 6 0 0 Z`}
+              fill="white"
+            />
+          </svg>
         ) : (
-          <div
-            className="absolute left-1/2 top-0 w-3 -translate-x-1/2 -translate-y-[calc(100%+5px)] rounded-full bg-white"
-            style={{ height: `${edgeLength}px` }}
+          <svg
+            className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[calc(100%+5px)]"
+            width={12}
+            height={edgeLength}
+            viewBox={`0 0 12 ${edgeLength}`}
             aria-hidden="true"
-          />
+          >
+            <path
+              d={`M0 0 L12 0 Q6 ${edgeLength * 0.4} 7 ${edgeLength / 2} Q6 ${edgeLength * 0.6} 12 ${edgeLength} L0 ${edgeLength} Q6 ${edgeLength * 0.6} 5 ${edgeLength / 2} Q6 ${edgeLength * 0.4} 0 0 Z`}
+              fill="white"
+            />
+          </svg>
         )
       )}
     </div>
