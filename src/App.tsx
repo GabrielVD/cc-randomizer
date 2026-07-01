@@ -175,6 +175,12 @@ function App() {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40">
+      <header className="flex flex-col items-center gap-2">
+        <h1 className="m-0 text-3xl font-bold tracking-tight text-white">CC Randomizer</h1>
+        <p className="m-0 max-w-prose text-center text-sm text-white/60">
+          Click on a cell to ban or lock it. Easy will select fewer risks, while Hard will select more.
+        </p>
+      </header>
       <RiskGrid
         picks={risk?.picks}
         conflicts={risk?.conflicts}
