@@ -139,3 +139,15 @@ export function findRiskGroup(code: string): RiskGroupData | undefined {
   const allGroups = [...data.free, data.key, ...data.extra];
   return allGroups.find(group => group.risks.some(r => r.code === code));
 }
+
+export function getKeyCodes(): string[] {
+  return riskData().key.risks.map(r => r.code);
+}
+
+export function getKeyAndExtraCodes(): string[] {
+  const data = riskData();
+  return [
+    ...data.key.risks.map(r => r.code),
+    ...data.extra.flatMap(g => g.risks.map(r => r.code)),
+  ];
+}

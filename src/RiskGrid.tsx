@@ -8,6 +8,8 @@ type RiskGridProps = {
   lockedCodes?: string[]
   bannedCodes?: string[]
   lockedConflictSet?: Set<string>
+  useKey?: boolean
+  keyExtraCodes?: Set<string>
   onCellClick?: (code: string) => void
 }
 
@@ -36,6 +38,8 @@ export default function RiskGrid({
   lockedCodes,
   bannedCodes,
   lockedConflictSet,
+  useKey = true,
+  keyExtraCodes,
   onCellClick,
 }: RiskGridProps) {
   const {
@@ -53,6 +57,7 @@ export default function RiskGrid({
   const lockedSet = useMemo(() => new Set(lockedCodes), [lockedCodes])
   const bannedSet = useMemo(() => new Set(bannedCodes), [bannedCodes])
   const lockedConflicts = lockedConflictSet ?? EMPTY_SET
+  const disabledCodes = keyExtraCodes ?? EMPTY_SET
 
   const handleCellClick = useCallback((code: string) => {
     if (movedRef.current) return
@@ -96,7 +101,8 @@ export default function RiskGrid({
               {rowCodes.map((riskCode, col) => {
                 let state: CellState | undefined
                 if (riskCode) {
-                  if (lockedSet.has(riskCode)) state = 'locked'
+                  if (!useKey && disabledCodes.has(riskCode)) state = 'conflict'
+                  else if (lockedSet.has(riskCode)) state = 'locked'
                   else if (lockedConflicts.has(riskCode)) state = 'conflict'
                   else if (bannedSet.has(riskCode)) state = 'banned'
                   else if (pickSet.has(riskCode)) state = 'selected'

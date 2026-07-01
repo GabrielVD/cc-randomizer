@@ -69,9 +69,6 @@ export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
       digits[key.pos] = key.val;
       level = key.level;
       picks.push(key.code);
-      for (const r of group.risks) {
-        if (r !== key) conflicts.push(r.code);
-      }
     } else {
       const available = group.risks.filter(r => !bannedSet.has(r.code));
       if (available.length > 0) {
@@ -79,9 +76,6 @@ export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
         digits[key.pos] = key.val;
         level = key.level;
         picks.push(key.code);
-        for (const r of available) {
-          if (r !== key) conflicts.push(r.code);
-        }
       }
     }
   }

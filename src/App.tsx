@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import RiskGrid from './RiskGrid'
 import { type CellState } from './Cell'
-import { findRiskGroup } from './risks'
+import { findRiskGroup, getKeyAndExtraCodes, getKeyCodes } from './risks'
 import {
   addRiskToCode,
   generateCode,
@@ -23,6 +23,9 @@ function App() {
   const [lockedCodes, setLockedCodes] = useState<string[]>([])
   const [bannedCodes, setBannedCodes] = useState<string[]>([])
 
+  const keyCodesSet = useMemo(() => new Set(getKeyCodes()), [])
+  const keyExtraCodesSet = useMemo(() => new Set(getKeyAndExtraCodes()), [])
+
   const lockedConflictSet = useMemo(() => {
     const set = new Set<string>()
     const lockedSet = new Set(lockedCodes)
@@ -30,15 +33,17 @@ function App() {
       const group = findRiskGroup(lockedCode)
       if (!group) continue
       for (const r of group.risks) {
-        if (r.code !== lockedCode && !lockedSet.has(r.code)) {
+        if (r.code !== lockedCode && !lockedSet.has(r.code) && !keyCodesSet.has(r.code)) {
           set.add(r.code)
         }
       }
     }
     return set
-  }, [lockedCodes])
+  }, [lockedCodes, keyCodesSet])
 
   const handleCellClick = useCallback((code: string) => {
+    if (!useKey && keyExtraCodesSet.has(code)) return
+
     const lockedSet = new Set(lockedCodes)
     const bannedSet = new Set(bannedCodes)
     const pickSet = new Set(risk?.picks)
@@ -51,6 +56,32 @@ function App() {
     else if (pickSet.has(code)) currentState = 'selected'
     else if (conflictSet.has(code)) currentState = 'conflict'
     else currentState = 'unselected'
+
+    if (keyCodesSet.has(code)) {
+      if (currentState === 'locked' || currentState === 'conflict') return
+      const group = findRiskGroup(code)
+      const otherKeyCodes = group?.risks
+        .filter(r => r.code !== code)
+        .map(r => r.code) ?? []
+      const newLocked = new Set(lockedSet)
+      const newBanned = new Set(bannedSet)
+      let newRisk = risk
+      newLocked.add(code)
+      for (const c of otherKeyCodes) {
+        newLocked.delete(c)
+        newBanned.delete(c)
+      }
+      if (newRisk) {
+        for (const c of otherKeyCodes) {
+          if (pickSet.has(c)) newRisk = removeRiskFromCode(newRisk, c)
+        }
+        if (!pickSet.has(code)) newRisk = addRiskToCode(newRisk, code)
+      }
+      setLockedCodes([...newLocked])
+      setBannedCodes([...newBanned])
+      setRisk(newRisk)
+      return
+    }
 
     let newState: CellState
     if (currentState === 'unselected' || currentState === 'selected') newState = 'banned'
@@ -105,7 +136,7 @@ function App() {
     setLockedCodes([...newLocked])
     setBannedCodes([...newBanned])
     setRisk(newRisk)
-  }, [lockedCodes, bannedCodes, risk, lockedConflictSet])
+  }, [lockedCodes, bannedCodes, risk, lockedConflictSet, useKey, keyCodesSet, keyExtraCodesSet])
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40">
@@ -115,6 +146,8 @@ function App() {
         lockedCodes={lockedCodes}
         bannedCodes={bannedCodes}
         lockedConflictSet={lockedConflictSet}
+        useKey={useKey}
+        keyExtraCodes={keyExtraCodesSet}
         onCellClick={handleCellClick}
       />
       <div className="flex gap-2" role="group" aria-label="Difficulty">
@@ -153,8 +186,14 @@ function App() {
             useKey ? 'bg-randomize' : 'bg-white/20',
           ].join(' ')}
           onClick={() => {
-            setUseKey(v => !v)
+            const next = !useKey
+            setUseKey(next)
             setRisk(null)
+            if (!next) {
+              const keyExtra = keyExtraCodesSet
+              setLockedCodes(prev => prev.filter(c => !keyExtra.has(c)))
+              setBannedCodes(prev => prev.filter(c => !keyExtra.has(c)))
+            }
           }}
         >
           <span
