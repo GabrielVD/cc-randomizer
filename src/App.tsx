@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Check, Share2 } from 'lucide-react'
 import RiskGrid from './RiskGrid'
 import { type CellState } from './Cell'
 import { findRiskGroup, getKeyAndExtraCodes, getKeyCodes } from './risks'
@@ -9,6 +10,7 @@ import {
   type Difficulty,
   type GeneratedRisk,
 } from './generateCode'
+import { buildShareUrl, readShareSettingsFromHash, shareOrCopyUrl, type ShareSettings } from './share'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
   { key: 'easy', label: 'Easy' },
@@ -17,11 +19,14 @@ const DIFFICULTIES: { key: Difficulty; label: string }[] = [
 ]
 
 function App() {
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium')
+  const [initialSettings] = useState(readShareSettingsFromHash)
+  const [difficulty, setDifficulty] = useState<Difficulty>(initialSettings?.difficulty ?? 'medium')
   const [risk, setRisk] = useState<GeneratedRisk | null>(null)
-  const [useKey, setUseKey] = useState(true)
-  const [lockedCodes, setLockedCodes] = useState<string[]>([])
-  const [bannedCodes, setBannedCodes] = useState<string[]>([])
+  const [useKey, setUseKey] = useState(initialSettings?.useKey ?? true)
+  const [lockedCodes, setLockedCodes] = useState<string[]>(initialSettings?.lockedCodes ?? [])
+  const [bannedCodes, setBannedCodes] = useState<string[]>(initialSettings?.bannedCodes ?? [])
+  const [shareStatus, setShareStatus] = useState<'idle' | 'shared' | 'copied'>('idle')
+  const shareTimerRef = useRef<number | null>(null)
 
   const keyCodesSet = useMemo(() => new Set(getKeyCodes()), [])
   const keyExtraCodesSet = useMemo(() => new Set(getKeyAndExtraCodes()), [])
@@ -138,6 +143,36 @@ function App() {
     setRisk(newRisk)
   }, [lockedCodes, bannedCodes, risk, lockedConflictSet, useKey, keyCodesSet, keyExtraCodesSet])
 
+  const handleShare = useCallback(async () => {
+    const url = buildShareUrl({ difficulty, useKey, lockedCodes, bannedCodes })
+    const result = await shareOrCopyUrl(url)
+    if (result === 'aborted' || result === 'failed') return
+    setShareStatus(result)
+    if (shareTimerRef.current !== null) window.clearTimeout(shareTimerRef.current)
+    shareTimerRef.current = window.setTimeout(() => setShareStatus('idle'), 1500)
+  }, [difficulty, useKey, lockedCodes, bannedCodes])
+
+  const applyShareSettings = useCallback((settings: ShareSettings) => {
+    setDifficulty(settings.difficulty)
+    setUseKey(settings.useKey)
+    setLockedCodes(settings.lockedCodes)
+    setBannedCodes(settings.bannedCodes)
+    setRisk(null)
+  }, [])
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const settings = readShareSettingsFromHash()
+      if (settings) applyShareSettings(settings)
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [applyShareSettings])
+
+  useEffect(() => () => {
+    if (shareTimerRef.current !== null) window.clearTimeout(shareTimerRef.current)
+  }, [])
+
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40">
       <RiskGrid
@@ -204,13 +239,24 @@ function App() {
           />
         </button>
       </label>
-      <button
-        type="button"
-        className="cursor-pointer rounded-lg bg-randomize px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-randomize-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        onClick={() => setRisk(generateCode({ difficulty, useKey, locked: lockedCodes, banned: bannedCodes }))}
-      >
-        Randomize
-      </button>
+      <div className="relative">
+        <button
+          type="button"
+          className="cursor-pointer rounded-lg bg-randomize px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-randomize-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          onClick={() => setRisk(generateCode({ difficulty, useKey, locked: lockedCodes, banned: bannedCodes }))}
+        >
+          Randomize
+        </button>
+        <button
+          type="button"
+          aria-label={shareStatus === 'idle' ? 'Share' : shareStatus === 'copied' ? 'Copied' : 'Shared'}
+          className="absolute left-full top-1/2 ml-3 flex -translate-y-1/2 cursor-pointer items-center gap-2 rounded-lg bg-white/10 px-5 py-3 text-lg font-semibold text-white transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          onClick={handleShare}
+        >
+          {shareStatus === 'idle' ? <Share2 className="h-5 w-5" /> : <Check className="h-5 w-5" />}
+          {shareStatus === 'idle' ? 'Share' : shareStatus === 'copied' ? 'Copied!' : 'Shared!'}
+        </button>
+      </div>
       <div className={`flex flex-col items-center gap-2 ${risk ? 'visible' : 'invisible'}`}>
         <div className="relative">
           <p className="m-0 font-mono text-xl tracking-wider text-white">
