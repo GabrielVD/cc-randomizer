@@ -1,5 +1,8 @@
+import { useId, useRef, useState } from 'react'
 import { riskData, type RiskData, type RiskEdge } from "./risks"
 import riskImages from "./riskImages"
+import riskTooltips from "./riskTooltips"
+import Tooltip from "./Tooltip"
 
 export type CellState = 'empty' | 'selected' | 'unselected' | 'conflict' | 'locked' | 'banned'
 
@@ -36,12 +39,16 @@ export default function Cell({
   state = 'empty',
   onClick,
 }: CellProps) {
+  const [hovered, setHovered] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const tooltipId = useId()
   const hasRisk = riskCode !== undefined
   const riskData = hasRisk ? RISK_DATA_MAP[riskCode] : undefined
   const image = hasRisk ? riskImages[riskCode!] : undefined
   const edgeLength = hasRisk ?
     EDGE_LENGTHS[riskData?.edge || 'none'] * height * .45 : 0
   const showEdge = edgeLength > 0
+  const tooltip = hasRisk ? riskTooltips[riskCode!] : undefined
 
   if (state === 'empty' && hasRisk) {
     state = 'unselected'
@@ -51,10 +58,15 @@ export default function Cell({
   const dimmed = state === 'conflict'
 
   return (
+    <>
     <div
+      ref={rootRef}
       className={`relative shrink-0 ${clickable ? 'cursor-pointer' : ''} ${className}`}
       style={{ aspectRatio: '7 / 9', height: `${height}px` }}
       onClick={clickable && riskCode ? () => onClick?.(riskCode) : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      aria-describedby={hovered && tooltip ? tooltipId : undefined}
     >
       <div className={`absolute inset-0 rounded-md transition-colors ${STATE_STYLES[state]} ${dimmed ? 'opacity-30' : ''}`}>
         {hasRisk && (
@@ -95,6 +107,10 @@ export default function Cell({
         )
       )}
     </div>
+    {hovered && tooltip && (
+      <Tooltip id={tooltipId} content={tooltip} triggerRef={rootRef} />
+    )}
+    </>
   )
 }
 
