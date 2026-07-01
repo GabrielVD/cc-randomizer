@@ -46,6 +46,8 @@ export default function RiskGrid({
     containerRef,
     contentRef,
     movedRef,
+    atStart,
+    atEnd,
     onPointerDown,
     onPointerMove,
     onPointerUp,
@@ -128,6 +130,16 @@ export default function RiskGrid({
             </div>
           ))}
         </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a0a0a] to-transparent transition-opacity duration-150"
+          style={{ opacity: atStart ? 0 : 1 }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0a0a] to-transparent transition-opacity duration-150"
+          style={{ opacity: atEnd ? 0 : 1 }}
+        />
       </div>
     </div>
   )

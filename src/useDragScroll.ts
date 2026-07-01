@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 
 // Timing
@@ -45,6 +45,8 @@ export function useDragScroll() {
   const contentRef = useRef<HTMLDivElement>(null)
   const movedRef = useRef(false)
   const scrollRef = useRef(0)
+  const [atStart, setAtStart] = useState(true)
+  const [atEnd, setAtEnd] = useState(false)
   const stateRef = useRef<State>({
     pointerId: -1,
     active: false,
@@ -58,10 +60,18 @@ export function useDragScroll() {
     samples: [],
   })
 
+  const updateEdges = useCallback(() => {
+    const scroll = scrollRef.current
+    const max = stateRef.current.maxScroll
+    setAtStart(scroll <= 0)
+    setAtEnd(scroll >= max)
+  }, [])
+
   const apply = useCallback(() => {
     const el = contentRef.current
     if (el) el.style.transform = `translate3d(${-scrollRef.current}px,0,0)`
-  }, [])
+    updateEdges()
+  }, [updateEdges])
 
   const cancelRaf = useCallback(() => {
     const s = stateRef.current
@@ -82,7 +92,8 @@ export function useDragScroll() {
       scrollRef.current = clamped
       apply()
     }
-  }, [apply])
+    updateEdges()
+  }, [apply, updateEdges])
 
   // The animation loop is kept in a ref so it can reschedule itself without
   // referencing its own binding before declaration (react-hooks/immutability).
@@ -256,6 +267,8 @@ export function useDragScroll() {
     containerRef,
     contentRef,
     movedRef,
+    atStart,
+    atEnd,
     onPointerDown,
     onPointerMove,
     onPointerUp,
