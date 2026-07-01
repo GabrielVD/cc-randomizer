@@ -43,7 +43,7 @@ for (let i = 0; i < DIGITS.length; i++) {
 
 const RISK_DATA = buildRisks();
 const CODE_MAP: Record<string, FlatRisk> = {};
-for (const group of [...RISK_DATA.free, RISK_DATA.key, ...RISK_DATA.locked]) {
+for (const group of [...RISK_DATA.free, RISK_DATA.key, ...RISK_DATA.extra]) {
   for (const r of group.risks) {
     CODE_MAP[r.code] = r;
   }
@@ -87,7 +87,7 @@ export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
   }
 
   const groups = useKey
-    ? RISK_DATA.free.concat(RISK_DATA.locked)
+    ? RISK_DATA.free.concat(RISK_DATA.extra)
     : RISK_DATA.free;
   for (const group of groups) {
     const lockedInGroup = group.risks.filter(r => lockedSet.has(r.code));
@@ -197,6 +197,6 @@ function buildRisks() {
   const risks = riskData();
   const free = convert(risks.free);
   const key = { risks: risks.key.risks.map(toFlat) };
-  const locked = convert(risks.locked);
-  return { free, key, locked };
+  const extra = convert(risks.extra);
+  return { free, key, extra };
 }

@@ -84,7 +84,7 @@ export function riskData() {
     { code: '000000080000000', level: 3, edge: 'left' }
   ]};
 
-  const locked: RiskGroupData[] = [
+  const extra: RiskGroupData[] = [
     {
       risks: [
       { code: '0000000G0000000', level: 1 }
@@ -131,11 +131,11 @@ export function riskData() {
     ]}
   ];
 
-  return { free, key, locked };
+  return { free, key, extra };
 }
 
 export function findRiskGroup(code: string): RiskGroupData | undefined {
   const data = riskData();
-  const allGroups = [...data.free, data.key, ...data.locked];
+  const allGroups = [...data.free, data.key, ...data.extra];
   return allGroups.find(group => group.risks.some(r => r.code === code));
 }

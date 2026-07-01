@@ -101,7 +101,7 @@ export default function Cell({
 function riskDataMap(): Record<string, RiskData> {
   const risks = riskData();
   const map: Record<string, RiskData> = {};
-  const allRisks = [...risks.free, risks.key, ...risks.locked];
+  const allRisks = [...risks.free, risks.key, ...risks.extra];
   allRisks.flatMap((group) => group.risks)
     .forEach((risk) => { map[risk.code] = risk; });
 
