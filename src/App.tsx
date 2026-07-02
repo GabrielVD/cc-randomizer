@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Share2, X } from 'lucide-react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { Check, RotateCcw, Share2 } from 'lucide-react'
 import RiskGrid from './RiskGrid'
 import { type CellState } from './Cell'
 import { findRiskGroup, getKeyAndExtraCodes, getKeyCodes } from './risks'
@@ -11,6 +11,7 @@ import {
   type GeneratedRisk,
 } from './generateCode'
 import { buildShareUrl, readShareSettingsFromHash, shareOrCopyUrl, type ShareSettings } from './share'
+import Tooltip from './Tooltip'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
   { key: 'easy', label: 'Easy' },
@@ -27,6 +28,12 @@ function App() {
   const [bannedCodes, setBannedCodes] = useState<string[]>(initialSettings?.bannedCodes ?? [])
   const [shareStatus, setShareStatus] = useState<'idle' | 'shared' | 'copied'>('idle')
   const shareTimerRef = useRef<number | null>(null)
+  const [resetHovered, setResetHovered] = useState(false)
+  const [shareHovered, setShareHovered] = useState(false)
+  const resetButtonRef = useRef<HTMLButtonElement>(null)
+  const shareButtonRef = useRef<HTMLButtonElement>(null)
+  const resetTooltipId = useId()
+  const shareTooltipId = useId()
 
   const keyCodesSet = useMemo(() => new Set(getKeyCodes()), [])
   const keyExtraCodesSet = useMemo(() => new Set(getKeyAndExtraCodes()), [])
@@ -174,7 +181,7 @@ function App() {
   }, [])
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-40 py-12">
+    <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-20 py-12">
       <header className="flex flex-col items-center gap-2">
         <h1 className="m-0 text-3xl font-bold tracking-tight text-white">CC Randomizer</h1>
         <p className="m-0 max-w-prose text-center text-sm text-white/60">
@@ -248,6 +255,22 @@ function App() {
       <div className="relative">
         <button
           type="button"
+          aria-label="Reset"
+          aria-describedby={resetHovered ? resetTooltipId : undefined}
+          ref={resetButtonRef}
+          className="absolute right-full top-1/2 mr-5 flex -translate-y-1/2 cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          onMouseEnter={() => setResetHovered(true)}
+          onMouseLeave={() => setResetHovered(false)}
+          onClick={() => {
+            setRisk(null)
+            setLockedCodes([])
+            setBannedCodes([])
+          }}
+        >
+          <RotateCcw className="h-7 w-7" />
+        </button>
+        <button
+          type="button"
           className="cursor-pointer rounded-lg bg-randomize px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-randomize-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           onClick={() => setRisk(generateCode({ difficulty, useKey, locked: lockedCodes, banned: bannedCodes }))}
         >
@@ -257,7 +280,11 @@ function App() {
           <button
             type="button"
             aria-label="Share"
+            aria-describedby={shareHovered ? shareTooltipId : undefined}
+            ref={shareButtonRef}
             className="absolute left-full top-1/2 ml-5 flex -translate-y-1/2 cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            onMouseEnter={() => setShareHovered(true)}
+            onMouseLeave={() => setShareHovered(false)}
             onClick={handleShare}
           >
             <Share2 className="h-7 w-7" />
@@ -271,24 +298,18 @@ function App() {
             {shareStatus === 'copied' ? 'Copied!' : 'Shared!'}
           </span>
         )}
+        {resetHovered && (
+          <Tooltip id={resetTooltipId} content="Reset all cells" triggerRef={resetButtonRef} />
+        )}
+        {shareHovered && shareStatus === 'idle' && (
+          <Tooltip id={shareTooltipId} content="Share a link to this setup" triggerRef={shareButtonRef} />
+        )}
       </div>
       <div className={`flex flex-col items-center gap-2 ${risk ? 'visible' : 'invisible'}`}>
         <div className="relative">
           <p className="m-0 font-mono text-xl tracking-wider text-white">
             {risk?.code ?? '\u00A0'}
           </p>
-          <button
-            type="button"
-            aria-label="Clear"
-            className="absolute left-full top-1/2 ml-3 -translate-y-1/2 cursor-pointer text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            onClick={() => {
-              setRisk(null)
-              setLockedCodes([])
-              setBannedCodes([])
-            }}
-          >
-            <X className="h-5 w-5" />
-          </button>
         </div>
         <p className="m-0 text-sm text-white/70">
           {risk ? `Level ${risk.level}` : '\u00A0'}
