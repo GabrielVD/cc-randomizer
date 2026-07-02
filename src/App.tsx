@@ -70,7 +70,18 @@ function App() {
     else currentState = 'unselected'
 
     if (keyCodesSet.has(code)) {
-      if (currentState === 'locked' || currentState === 'conflict') return
+      if (currentState === 'conflict') return
+      if (currentState === 'locked') {
+        const newLocked = new Set(lockedSet)
+        newLocked.delete(code)
+        let newRisk = risk
+        if (newRisk && !pickSet.has(code)) {
+          newRisk = addRiskToCode(newRisk, code)
+        }
+        setLockedCodes([...newLocked])
+        setRisk(newRisk)
+        return
+      }
       const group = findRiskGroup(code)
       const otherKeyCodes = group?.risks
         .filter(r => r.code !== code)
