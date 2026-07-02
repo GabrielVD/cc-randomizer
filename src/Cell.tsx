@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react'
+import { Lock } from 'lucide-react'
 import { getKeyCodes, riskData, type RiskData, type RiskEdge } from "./risks"
 import riskImages from "./riskImages"
 import riskTooltips from "./riskTooltips"
@@ -19,8 +20,8 @@ const STATE_STYLES: Record<CellState, string> = {
   empty: 'bg-[#212121]',
   unselected: 'bg-[#141414] ring-1 ring-white/10',
   selected: 'bg-[#9c0508] ring-2 ring-white',
-  conflict: 'bg-neutral-600 ring-2 ring-red-500',
-  locked: 'bg-neutral-600 ring-2 ring-blue-500',
+  conflict: 'bg-neutral-600',
+  locked: 'bg-[#9c0508] ring-2 ring-white',
   banned: 'bg-neutral-800 ring-2 ring-neutral-500',
 }
 
@@ -104,6 +105,13 @@ export default function Cell({
               style={{ height: `${height * 0.22}px` }}
             />
           </div>
+        )}
+        {state === 'locked' && (
+          <Lock
+            aria-hidden="true"
+            className="pointer-events-none absolute right-1 top-1 text-white"
+            style={{ width: `${height * 0.22}px`, height: `${height * 0.22}px` }}
+          />
         )}
       </div>
       {showEdge && (
