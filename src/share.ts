@@ -74,6 +74,21 @@ export function readShareSettingsFromHash(): ShareSettings | null {
 
 export type ShareResult = 'shared' | 'copied' | 'aborted' | 'failed'
 
+export type CopyResult = 'copied' | 'failed'
+
+/** Copy arbitrary text to the clipboard. */
+export async function copyText(text: string): Promise<CopyResult> {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return 'copied'
+    } catch {
+      return 'failed'
+    }
+  }
+  return 'failed'
+}
+
 /** Try the native Web Share sheet, falling back to the clipboard. */
 export async function shareOrCopyUrl(url: string): Promise<ShareResult> {
   if (typeof navigator !== 'undefined' && navigator.share) {

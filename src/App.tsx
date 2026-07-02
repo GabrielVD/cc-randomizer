@@ -10,7 +10,7 @@ import {
   type Difficulty,
   type GeneratedRisk,
 } from './generateCode'
-import { buildShareUrl, readShareSettingsFromHash, shareOrCopyUrl, type ShareSettings } from './share'
+import { buildShareUrl, copyText, readShareSettingsFromHash, shareOrCopyUrl, type ShareSettings } from './share'
 import Tooltip from './Tooltip'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
@@ -28,6 +28,8 @@ function App() {
   const [bannedCodes, setBannedCodes] = useState<string[]>(initialSettings?.bannedCodes ?? [])
   const [shareStatus, setShareStatus] = useState<'idle' | 'shared' | 'copied'>('idle')
   const shareTimerRef = useRef<number | null>(null)
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
+  const copyTimerRef = useRef<number | null>(null)
   const [resetHovered, setResetHovered] = useState(false)
   const [shareHovered, setShareHovered] = useState(false)
   const resetButtonRef = useRef<HTMLButtonElement>(null)
@@ -170,6 +172,15 @@ function App() {
     shareTimerRef.current = window.setTimeout(() => setShareStatus('idle'), 1500)
   }, [difficulty, useKey, lockedCodes, bannedCodes])
 
+  const handleRandomize = useCallback(async () => {
+    const generated = generateCode({ difficulty, useKey, locked: lockedCodes, banned: bannedCodes })
+    setRisk(generated)
+    if (await copyText(generated.code) !== 'copied') return
+    setCopyStatus('copied')
+    if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current)
+    copyTimerRef.current = window.setTimeout(() => setCopyStatus('idle'), 1500)
+  }, [difficulty, useKey, lockedCodes, bannedCodes])
+
   const applyShareSettings = useCallback((settings: ShareSettings) => {
     setDifficulty(settings.difficulty)
     setUseKey(settings.useKey)
@@ -189,6 +200,7 @@ function App() {
 
   useEffect(() => () => {
     if (shareTimerRef.current !== null) window.clearTimeout(shareTimerRef.current)
+    if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current)
   }, [])
 
   return (
@@ -283,7 +295,7 @@ function App() {
         <button
           type="button"
           className="cursor-pointer rounded-lg bg-randomize px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-randomize-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          onClick={() => setRisk(generateCode({ difficulty, useKey, locked: lockedCodes, banned: bannedCodes }))}
+          onClick={handleRandomize}
         >
           Randomize
         </button>
@@ -303,7 +315,7 @@ function App() {
         ) : (
           <span
             aria-label={shareStatus === 'copied' ? 'Copied' : 'Shared'}
-            className="absolute left-full top-1/2 ml-3 flex -translate-y-1/2 items-center gap-2 text-lg font-semibold text-white"
+            className="absolute left-full top-1/2 ml-6 flex -translate-y-1/2 items-center gap-1 text-sm font-semibold text-white"
           >
             <Check className="h-5 w-5" />
             {shareStatus === 'copied' ? 'Copied!' : 'Shared!'}
@@ -321,6 +333,15 @@ function App() {
           <p className="m-0 font-mono text-xl tracking-wider text-white">
             {risk?.code ?? '\u00A0'}
           </p>
+          {copyStatus === 'copied' && (
+            <span
+              role="status"
+              className="absolute left-full top-1/2 ml-3 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap text-sm font-semibold text-white"
+            >
+              <Check className="h-5 w-5" />
+              Copied!
+            </span>
+          )}
         </div>
         <p className="m-0 text-sm text-white/70">
           {risk ? `Level ${risk.level}` : '\u00A0'}
