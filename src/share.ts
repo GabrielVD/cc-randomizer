@@ -30,13 +30,41 @@ function fromBase64Url(str: string): string {
   return atob(base64 + '='.repeat((4 - (base64.length % 4)) % 4))
 }
 
+const CODE_LEN = 15
+const ZERO_CODE = '0'.repeat(CODE_LEN)
+
+function encodeCode(code: string): string {
+  const index = code.search(/[^0]/)
+  return index === -1 ? '' : `${code[index]}${index.toString(16)}`
+}
+
+function decodeCode(encoded: string): string {
+  const c = encoded[0]
+  const index = parseInt(encoded[1], 16)
+  const chars = ZERO_CODE.split('')
+  chars[index] = c
+  return chars.join('')
+}
+
+function encodeCodes(codes: string[]): string {
+  return codes.map(encodeCode).join('')
+}
+
+function decodeCodes(encoded: string): string[] {
+  const codes: string[] = []
+  for (let i = 0; i + 2 <= encoded.length; i += 2) {
+    codes.push(decodeCode(encoded.slice(i, i + 2)))
+  }
+  return codes
+}
+
 export function encodeSettings(settings: ShareSettings): string {
   return toBase64Url(
     [
       DIFFICULTY_TO_CHAR[settings.difficulty],
       settings.useKey ? '1' : '0',
-      settings.lockedCodes.join(','),
-      settings.bannedCodes.join(','),
+      encodeCodes(settings.lockedCodes),
+      encodeCodes(settings.bannedCodes),
     ].join('|'),
   )
 }
@@ -49,8 +77,8 @@ export function decodeSettings(encoded: string): ShareSettings | null {
     return {
       difficulty,
       useKey: k === '1',
-      lockedCodes: l ? l.split(',') : [],
-      bannedCodes: b ? b.split(',') : [],
+      lockedCodes: decodeCodes(l ?? ''),
+      bannedCodes: decodeCodes(b ?? ''),
     }
   } catch {
     return null
