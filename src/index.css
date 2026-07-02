@@ -4,6 +4,9 @@
   --color-randomize: #c0001c;
   --color-randomize-hover: #d04055;
   --color-key: #e0b000;
+  --color-cell-empty: #212121;
+  --color-cell-unselected: #141414;
+  --color-cell-selected: #9c0508;
 }
 
 html {
