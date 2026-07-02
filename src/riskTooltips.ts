@@ -30,7 +30,7 @@ const riskTooltips: Record<string, string> = {
 
   // Key
   '000000010000000': 'Combo cooldown -60%, BSkill DMG -60%',
-  '000000080000000': 'Non-skill non-Basic DMG +100%, BSkill DMG -60%',
+  '000000080000000': 'Non-Skill non-Basic DMG +100%, BSkill DMG -60%',
 
   // Extra
   '0000000G0000000': 'Enemy DMG taken -10% for the infliction type, per infliction stack',
@@ -45,7 +45,7 @@ const riskTooltips: Record<string, string> = {
   '0000G0000000000': '15s Freeze duration on allies, cancelled by Nature skills',
   '000400000000000': '15s Freeze duration on allies, cancelled by Electric skills',
   '001000000000000': '15s Freeze duration on allies, cancelled by Physical skills',
-  '000040000000000': 'Cryo from enemies now freezes instead',
+  '000040000000000': 'Cryo from enemies now Freezes instead',
   '008000000000000': 'Enemies heal for 5% Max HP per second under crowd control',
   '00G000000000000': 'Enemies heal for 15% Max HP per second under crowd control',
   '040000000000000': 'Stronger enemies in the final wave',
