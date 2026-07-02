@@ -31,8 +31,8 @@ const DIGITS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const CODE_LEN = 15;
 
 const DIFFICULTY_PROBABILITY: Record<Difficulty, number> = {
-  easy: 0.3,
-  medium: 0.5,
+  easy: 0.55,
+  medium: 0.55,
   hard: 0.75,
 };
 
@@ -80,10 +80,12 @@ export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
     }
   }
 
+  let adjustedP = p;
+  let powerFactor = 0;
   const groups = useKey
     ? RISK_DATA.free.concat(RISK_DATA.extra)
     : RISK_DATA.free;
-  for (const group of groups) {
+  for (const group of shuffle(groups)) {
     const lockedInGroup = group.risks.filter(r => lockedSet.has(r.code));
     if (lockedInGroup.length > 0) {
       for (const locked of lockedInGroup) {
@@ -96,10 +98,16 @@ export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
       }
     } else {
       const available = group.risks.filter(r => !bannedSet.has(r.code));
-      if (available.length > 0 && cryptoRandom() < p) {
+      if (available.length > 0 && cryptoRandom() < adjustedP) {
         const r = pick(available);
         digits[r.pos] += r.val;
         level += r.level;
+
+        if (difficulty !== 'hard') {
+          powerFactor += levelPowerFactor(r.level);
+          adjustedP = adjustedProbability(p, powerFactor, difficulty);
+        }
+
         picks.push(r.code);
         for (const other of available) {
           if (other !== r) conflicts.push(other.code);
@@ -139,6 +147,15 @@ export function removeRiskFromCode(risk: GeneratedRisk, code: string): Generated
   };
 }
 
+function levelPowerFactor(level: number): number {
+  return level * level * level;
+}
+
+function adjustedProbability(base: number, powerFactor: number, diff: Difficulty): number {
+  const power = diff === 'easy' ? 0.3 : 0.07;
+  return base / Math.pow(powerFactor, power);
+}
+
 // --- Random number generation (batched) ---
 
 const randomPool = new Uint32Array(64);
@@ -154,6 +171,17 @@ function cryptoRandom(): number {
 
 function pick<T>(list: T[]): T {
   return list[Math.floor(cryptoRandom() * list.length)];
+}
+
+function shuffle<T>(list: readonly T[]): T[] {
+  const out = list.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(cryptoRandom() * (i + 1));
+    const tmp = out[i];
+    out[i] = out[j];
+    out[j] = tmp;
+  }
+  return out;
 }
 
 function parseDigits(code: string): number[] {
