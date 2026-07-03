@@ -15,13 +15,13 @@ import Tooltip from './Tooltip'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
   { key: 'easy', label: 'Easy' },
-  { key: 'medium', label: 'Medium' },
+  { key: 'normal', label: 'Normal' },
   { key: 'hard', label: 'Hard' },
 ]
 
 function App() {
   const [initialSettings] = useState(readShareSettingsFromHash)
-  const [difficulty, setDifficulty] = useState<Difficulty>(initialSettings?.difficulty ?? 'medium')
+  const [difficulty, setDifficulty] = useState<Difficulty>(initialSettings?.difficulty ?? 'normal')
   const [risk, setRisk] = useState<GeneratedRisk | null>(null)
   const [useKey, setUseKey] = useState(initialSettings?.useKey ?? true)
   const [lockedCodes, setLockedCodes] = useState<string[]>(initialSettings?.lockedCodes ?? [])
@@ -246,7 +246,7 @@ function App() {
         })}
       </div>
       <label className="flex cursor-pointer items-center gap-2 text-sm text-white/70">
-        <span>Key</span>
+        <span>Key Criteria</span>
         <button
           type="button"
           role="switch"

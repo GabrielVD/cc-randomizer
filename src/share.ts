@@ -9,13 +9,13 @@ export type ShareSettings = {
 
 const DIFFICULTY_TO_CHAR: Record<Difficulty, string> = {
   easy: 'e',
-  medium: 'm',
+  normal: 'n',
   hard: 'h',
 }
 
 const CHAR_TO_DIFFICULTY: Record<string, Difficulty> = {
   e: 'easy',
-  m: 'medium',
+  n: 'normal',
   h: 'hard',
 }
 

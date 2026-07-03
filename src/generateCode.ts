@@ -1,6 +1,6 @@
 import { riskData, type RiskData, type RiskGroupData } from "./risks";
 
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type Difficulty = 'easy' | 'normal' | 'hard';
 
 export type GeneratedRisk = {
   code: string;
@@ -32,7 +32,7 @@ const CODE_LEN = 15;
 
 const DIFFICULTY_PROBABILITY: Record<Difficulty, number> = {
   easy: 0.55,
-  medium: 0.55,
+  normal: 0.55,
   hard: 0.75,
 };
 
@@ -50,7 +50,7 @@ for (const group of [...RISK_DATA.free, RISK_DATA.key, ...RISK_DATA.extra]) {
 }
 
 export function generateCode(options: GenerateOptions = {}): GeneratedRisk {
-  const difficulty = options.difficulty ?? 'medium';
+  const difficulty = options.difficulty ?? 'normal';
   const useKey = options.useKey ?? true;
   const lockedSet = new Set(options.locked ?? []);
   const bannedSet = new Set(options.banned ?? []);

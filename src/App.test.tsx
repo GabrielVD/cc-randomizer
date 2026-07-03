@@ -17,10 +17,10 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders three difficulty buttons with Medium selected by default', () => {
+  it('renders three difficulty buttons with Normal selected by default', () => {
     render(<App />)
-    const medium = screen.getByRole('button', { name: 'Medium' })
-    expect(medium).toHaveAttribute('aria-pressed', 'true')
+    const normal = screen.getByRole('button', { name: 'Normal' })
+    expect(normal).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Easy' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: 'Hard' })).toHaveAttribute('aria-pressed', 'false')
   })
@@ -30,7 +30,7 @@ describe('App', () => {
     const hard = screen.getByRole('button', { name: 'Hard' })
     fireEvent.click(hard)
     expect(hard).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Medium' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Normal' })).toHaveAttribute(
       'aria-pressed',
       'false',
     )

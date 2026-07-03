@@ -35,7 +35,7 @@ describe('encodeSettings / decodeSettings', () => {
   })
 
   it('round-trips every difficulty', () => {
-    for (const difficulty of ['easy', 'medium', 'hard'] as const) {
+    for (const difficulty of ['easy', 'normal', 'hard'] as const) {
       const settings: ShareSettings = { difficulty, useKey: true, lockedCodes: [], bannedCodes: [] }
       expect(decodeSettings(encodeSettings(settings))).toEqual(settings)
     }
