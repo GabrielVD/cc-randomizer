@@ -7,6 +7,7 @@ describe('App', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     window.location.hash = ''
+    document.getElementById('kofi-widget-2-script')?.remove()
   })
 
   it('renders the title and description', () => {
@@ -26,6 +27,15 @@ describe('App', () => {
     )
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  })
+
+  it('loads the Ko-fi widget script', () => {
+    render(<App />)
+    expect(
+      document.querySelector(
+        'script[src="https://storage.ko-fi.com/cdn/widget/Widget_2.js"]',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('renders three difficulty buttons with Normal selected by default', () => {

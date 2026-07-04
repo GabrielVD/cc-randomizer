@@ -12,6 +12,7 @@ import {
 } from './generateCode'
 import { buildShareUrl, copyText, readShareSettingsFromHash, shareOrCopyUrl, type ShareSettings } from './share'
 import Tooltip from './Tooltip'
+import KofiButton from './KofiButton'
 import githubIcon from './assets/github.svg'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
@@ -221,6 +222,9 @@ function App() {
           className="h-7 w-7"
         />
       </a>
+      <div className="fixed bottom-6 right-6 z-50">
+        <KofiButton kofiId="J7O022LHVW" />
+      </div>
       <header className="flex flex-col items-center gap-2">
         <h1 className="m-0 text-3xl font-bold tracking-tight text-white">CC Randomizer</h1>
         <p className="m-0 max-w-prose text-center text-sm text-white/60">
