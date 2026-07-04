@@ -12,6 +12,7 @@ import {
 } from './generateCode'
 import { buildShareUrl, copyText, readShareSettingsFromHash, shareOrCopyUrl, type ShareSettings } from './share'
 import Tooltip from './Tooltip'
+import githubIcon from './assets/github.svg'
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
   { key: 'easy', label: 'Easy' },
@@ -205,6 +206,21 @@ function App() {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-20 py-12">
+      <a
+        href="https://github.com/GabrielVD/cc-randomizer"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub"
+        className="fixed top-6 right-6 flex cursor-pointer items-center opacity-50 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      >
+        <img
+          src={githubIcon}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="h-7 w-7"
+        />
+      </a>
       <header className="flex flex-col items-center gap-2">
         <h1 className="m-0 text-3xl font-bold tracking-tight text-white">CC Randomizer</h1>
         <p className="m-0 max-w-prose text-center text-sm text-white/60">

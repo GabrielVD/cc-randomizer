@@ -17,6 +17,17 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('renders a GitHub link pointing to the repository', () => {
+    render(<App />)
+    const link = screen.getByRole('link', { name: 'GitHub' })
+    expect(link).toHaveAttribute(
+      'href',
+      'https://github.com/GabrielVD/cc-randomizer',
+    )
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  })
+
   it('renders three difficulty buttons with Normal selected by default', () => {
     render(<App />)
     const normal = screen.getByRole('button', { name: 'Normal' })
