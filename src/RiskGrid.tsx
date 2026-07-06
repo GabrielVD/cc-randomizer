@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, type CSSProperties } from 'react'
 import Cell, { type CellState } from './Cell'
 import { useDragScroll } from './useDragScroll'
 
@@ -14,23 +14,27 @@ type RiskGridProps = {
 }
 
 const ROWS = 3
-const GRID_HEIGHT = 600
 
-const BASE_CELL_HEIGHT = 45
-const BASE_ROW_PADDING = 8
-const BASE_ROW_GAP = 8
-const BASE_CELL_GAP = 14
-const BASE_TOTAL =
-  ROWS * (BASE_CELL_HEIGHT + 2 * BASE_ROW_PADDING) + (ROWS - 1) * BASE_ROW_GAP
+// All grid dimensions are fixed ratios of the cell height, delivered via a
+// single CSS custom property (`--cell-h`) set with clamp() on the grid root.
+// jsdom cannot resolve clamp()/calc(); tests assert on these style strings.
+const CELL_H = 'var(--cell-h)'
+const ROW_HEIGHT = `calc(${CELL_H} * 61 / 45)`
+const ROW_PADDING = `calc(${CELL_H} * 8 / 45)`
+const ROW_GAP = `calc(${CELL_H} * 8 / 45)`
+const CELL_GAP = `calc(${CELL_H} * 14 / 45)`
+const HEADER_WIDTH = `calc(${CELL_H} * 0.41)`
+const HEADER_FONT_SIZE = `calc(${CELL_H} * 0.18)`
+const HEADER_ARROW = `calc(${CELL_H} * 0.13)`
+const HEADER_PADDING_RIGHT = `calc(${CELL_H} * 0.088)`
 
-const SCALE = GRID_HEIGHT / BASE_TOTAL
-const CELL_HEIGHT = BASE_CELL_HEIGHT * SCALE
-const ROW_PADDING = BASE_ROW_PADDING * SCALE
-const ROW_GAP = BASE_ROW_GAP * SCALE
-const CELL_GAP = BASE_CELL_GAP * SCALE
-const ROW_HEIGHT = CELL_HEIGHT + 2 * ROW_PADDING
+const GRID_STYLE = { '--cell-h': 'clamp(56px, 12svh, 136px)' } as CSSProperties
 
-const rowStyle = { height: `${ROW_HEIGHT}px`, padding: `${ROW_PADDING}px`, gap: `${CELL_GAP}px` }
+const rowStyle: CSSProperties = {
+  height: ROW_HEIGHT,
+  padding: ROW_PADDING,
+  gap: CELL_GAP,
+}
 
 export default function RiskGrid({
   picks,
@@ -67,22 +71,23 @@ export default function RiskGrid({
   }, [movedRef, onCellClick])
 
   return (
-    <div className="flex w-max max-w-full gap-2">
+    <div className="flex w-max max-w-full gap-2" style={GRID_STYLE}>
       {/* Fixed row headers */}
       <div
         className="flex shrink-0 flex-col"
-        style={{ gap: `${ROW_GAP}px` }}
+        style={{ gap: ROW_GAP }}
       >
         {Array.from({ length: ROWS }, (_, i) => (
           <div
             key={i}
-            className="flex items-center justify-center bg-gradient-to-br from-white/15 to-white/5 text-2xl font-bold text-white/80"
+            className="flex items-center justify-center bg-gradient-to-br from-white/15 to-white/5 font-bold text-white/80"
             style={{
-              height: `${ROW_HEIGHT}px`,
-              width: '3.5rem',
-              paddingRight: '0.75rem',
+              height: ROW_HEIGHT,
+              width: HEADER_WIDTH,
+              paddingRight: HEADER_PADDING_RIGHT,
+              fontSize: HEADER_FONT_SIZE,
               clipPath:
-                'polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%)',
+                `polygon(0 0, calc(100% - ${HEADER_ARROW}) 0, 100% 50%, calc(100% - ${HEADER_ARROW}) 100%, 0 100%)`,
             }}
           >
             {i + 1}
@@ -99,7 +104,7 @@ export default function RiskGrid({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        <div ref={contentRef} className="flex w-max flex-col will-change-transform" style={{ gap: `${ROW_GAP}px` }}>
+        <div ref={contentRef} className="flex w-max flex-col will-change-transform" style={{ gap: ROW_GAP }}>
           {riskCodes().map((rowCodes, row) => (
             <div
               key={row}
@@ -120,7 +125,6 @@ export default function RiskGrid({
                 return (
                   <Cell
                     key={col}
-                    height={CELL_HEIGHT}
                     riskCode={riskCode ?? undefined}
                     state={state}
                     onClick={handleCellClick}
@@ -132,12 +136,12 @@ export default function RiskGrid({
         </div>
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a0a0a] to-transparent transition-opacity duration-150"
+          className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#0a0a0a] to-transparent transition-opacity duration-150 sm:w-16"
           style={{ opacity: atStart ? 0 : 1 }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0a0a] to-transparent transition-opacity duration-150"
+          className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#0a0a0a] to-transparent transition-opacity duration-150 sm:w-16"
           style={{ opacity: atEnd ? 0 : 1 }}
         />
       </div>

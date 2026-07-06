@@ -206,28 +206,25 @@ function App() {
   }, [])
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-20 py-12">
+    <main className="flex min-h-svh flex-col items-center justify-center-safe gap-6 px-4 py-8 sm:px-8 sm:py-12 lg:px-20">
       <a
         href="https://github.com/GabrielVD/cc-randomizer"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="GitHub"
-        className="fixed top-6 right-6 flex cursor-pointer items-center opacity-50 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="fixed top-4 right-4 flex cursor-pointer items-center opacity-50 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:top-6 sm:right-6"
       >
         <img
           src={githubIcon}
           alt=""
           aria-hidden="true"
           draggable={false}
-          className="h-7 w-7"
+          className="h-6 w-6 sm:h-7 sm:w-7"
         />
       </a>
-      <div className="fixed bottom-6 right-6 z-50">
-        <KofiButton kofiId="J7O022LHVW" />
-      </div>
-      <header className="flex flex-col items-center gap-2">
-        <h1 className="m-0 text-3xl font-bold tracking-tight text-white">CC Randomizer</h1>
-        <p className="m-0 max-w-prose text-center text-sm text-white/60">
+      <header className="flex flex-col items-center gap-2 pt-10 sm:pt-0">
+        <h1 className="m-0 text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">CC Randomizer</h1>
+        <p className="m-0 max-w-prose px-2 text-center text-sm text-white/60">
           Click on a cell to ban or lock it. Easy will select fewer risks, while Hard will select more.
         </p>
       </header>
@@ -295,77 +292,82 @@ function App() {
           />
         </button>
       </label>
-      <div className="relative">
+      <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-5">
+        <div className="flex justify-self-end">
+          <button
+            type="button"
+            aria-label="Reset"
+            aria-describedby={resetHovered ? resetTooltipId : undefined}
+            ref={resetButtonRef}
+            className="flex cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            onMouseEnter={() => setResetHovered(true)}
+            onMouseLeave={() => setResetHovered(false)}
+            onClick={() => {
+              setRisk(null)
+              setLockedCodes([])
+              setBannedCodes([])
+            }}
+          >
+            <RotateCcw className="h-7 w-7" />
+          </button>
+        </div>
         <button
           type="button"
-          aria-label="Reset"
-          aria-describedby={resetHovered ? resetTooltipId : undefined}
-          ref={resetButtonRef}
-          className="absolute right-full top-1/2 mr-5 flex -translate-y-1/2 cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          onMouseEnter={() => setResetHovered(true)}
-          onMouseLeave={() => setResetHovered(false)}
-          onClick={() => {
-            setRisk(null)
-            setLockedCodes([])
-            setBannedCodes([])
-          }}
-        >
-          <RotateCcw className="h-7 w-7" />
-        </button>
-        <button
-          type="button"
-          className="cursor-pointer rounded-lg bg-randomize px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-randomize-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          className="cursor-pointer rounded-lg bg-randomize px-6 py-3 text-lg font-semibold text-white transition-colors hover:bg-randomize-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:px-8"
           onClick={handleRandomize}
         >
           Randomize
         </button>
-        {shareStatus === 'idle' ? (
-          <button
-            type="button"
-            aria-label="Share"
-            aria-describedby={shareHovered ? shareTooltipId : undefined}
-            ref={shareButtonRef}
-            className="absolute left-full top-1/2 ml-5 flex -translate-y-1/2 cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            onMouseEnter={() => setShareHovered(true)}
-            onMouseLeave={() => setShareHovered(false)}
-            onClick={handleShare}
-          >
-            <Share2 className="h-7 w-7" />
-          </button>
-        ) : (
-          <span
-            aria-label={shareStatus === 'copied' ? 'Copied' : 'Shared'}
-            className="absolute left-full top-1/2 ml-6 flex -translate-y-1/2 items-center gap-1 text-sm font-semibold text-white"
-          >
-            <Check className="h-5 w-5" />
-            {shareStatus === 'copied' ? 'Copied!' : 'Shared!'}
-          </span>
-        )}
-        {resetHovered && (
-          <Tooltip id={resetTooltipId} content="Reset all cells" triggerRef={resetButtonRef} />
-        )}
-        {shareHovered && shareStatus === 'idle' && (
-          <Tooltip id={shareTooltipId} content="Share a link to this setup" triggerRef={shareButtonRef} />
-        )}
-      </div>
-      <div className={`flex flex-col items-center gap-2 ${risk ? 'visible' : 'invisible'}`}>
-        <div className="relative">
-          <p className="m-0 font-mono text-xl tracking-wider text-white">
-            {risk?.code ?? '\u00A0'}
-          </p>
-          {copyStatus === 'copied' && (
+        <div className="min-w-16 justify-self-start">
+          {shareStatus === 'idle' ? (
+            <button
+              type="button"
+              aria-label="Share"
+              aria-describedby={shareHovered ? shareTooltipId : undefined}
+              ref={shareButtonRef}
+              className="flex cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              onMouseEnter={() => setShareHovered(true)}
+              onMouseLeave={() => setShareHovered(false)}
+              onClick={handleShare}
+            >
+              <Share2 className="h-7 w-7" />
+            </button>
+          ) : (
             <span
-              role="status"
-              className="absolute left-full top-1/2 ml-3 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap text-sm font-semibold text-white"
+              aria-label={shareStatus === 'copied' ? 'Copied' : 'Shared'}
+              className="flex items-center gap-1 text-sm font-semibold text-white"
             >
               <Check className="h-5 w-5" />
-              Copied!
+              {shareStatus === 'copied' ? 'Copied!' : 'Shared!'}
             </span>
           )}
         </div>
+      </div>
+      {resetHovered && (
+        <Tooltip id={resetTooltipId} content="Reset all cells" triggerRef={resetButtonRef} />
+      )}
+      {shareHovered && shareStatus === 'idle' && (
+        <Tooltip id={shareTooltipId} content="Share a link to this setup" triggerRef={shareButtonRef} />
+      )}
+      <div className={`flex flex-col items-center gap-2 ${risk ? 'visible' : 'invisible'}`}>
+        <p className="m-0 font-mono text-xl tracking-wider text-white">
+          {risk?.code ?? '\u00A0'}
+        </p>
+        {copyStatus === 'copied' && (
+          <span
+            role="status"
+            className="flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-white"
+          >
+            <Check className="h-5 w-5" />
+            Copied!
+          </span>
+        )}
         <p className="m-0 text-sm text-white/70">
           {risk ? `Level ${risk.level}` : '\u00A0'}
         </p>
+      </div>
+      <div className="self-center sm:fixed sm:bottom-6 sm:right-6 sm:z-50">
+        <KofiButton kofiId="J7O022LHVW" />
       </div>
     </main>
   )

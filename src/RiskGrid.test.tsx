@@ -44,4 +44,18 @@ describe('RiskGrid', () => {
     )
     expect(screen.getByAltText('000000010000000')).toBeInTheDocument()
   })
+
+  it('sets --cell-h with a clamp() on the grid root', () => {
+    const { container } = render(<RiskGrid />)
+    const root = container.firstChild as HTMLElement
+    expect(root.style.getPropertyValue('--cell-h')).toBe('clamp(56px, 12svh, 136px)')
+  })
+
+  it('derives row dimensions from --cell-h via calc', () => {
+    const { container } = render(<RiskGrid />)
+    const row = container.querySelector('[class*="rounded-xl"]') as HTMLElement
+    expect(row.style.height).toContain('calc(var(--cell-h)')
+    expect(row.style.padding).toContain('calc(var(--cell-h)')
+    expect(row.style.gap).toContain('calc(var(--cell-h)')
+  })
 })

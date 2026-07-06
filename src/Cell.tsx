@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { useId, useRef, useState, type CSSProperties } from 'react'
 import { Lock } from 'lucide-react'
 import { getKeyCodes, riskData, type RiskData, type RiskEdge } from "./risks"
 import riskImages from "./riskImages"
@@ -9,7 +9,6 @@ import keyIcon from "./assets/key.svg"
 export type CellState = 'empty' | 'selected' | 'unselected' | 'conflict' | 'locked' | 'banned'
 
 type CellProps = {
-  height?: number
   className?: string
   state?: CellState
   riskCode?: string
@@ -32,11 +31,52 @@ const EDGE_LENGTHS: Record<RiskEdge, number> = {
   left: .5
 }
 
+const BASE_CELL_HEIGHT = 45
+const ICON_RATIO = 0.22
+const ICON_SIZE = `calc(var(--cell-h) * ${ICON_RATIO})`
+// Edge thickness is a fixed 12px at the desktop cell height (135.7px); the
+// ratio scales it with the cell on mobile.
+const EDGE_THICKNESS_RATIO = 12 / 135.7
+const THICKNESS_SIZE = `calc(var(--cell-h) * ${EDGE_THICKNESS_RATIO})`
+// Edge gap is a fixed 5px at the desktop cell height (135.7px); the ratio
+// scales it with the cell on mobile.
+const EDGE_GAP_RATIO = 5 / 135.7
+
+type EdgeOrientation = 'top' | 'left'
+type EdgeGeometry = {
+  path: string
+  viewBox: string
+  longSize: string
+  orientation: EdgeOrientation
+}
+
+function buildEdgeGeometry(edge: Exclude<RiskEdge, 'none'>): EdgeGeometry {
+  const edgeFactor = 0.45
+  const baseLength = EDGE_LENGTHS[edge] * BASE_CELL_HEIGHT * edgeFactor
+  const longRatio = EDGE_LENGTHS[edge] * edgeFactor
+  const longSize = `calc(var(--cell-h) * ${longRatio})`
+  if (edge === 'left') {
+    const e = baseLength
+    const path = `M0 0 L0 12 Q${e * 0.4} 6 ${e / 2} 7 Q${e * 0.6} 6 ${e} 12 L${e} 0 Q${e * 0.6} 6 ${e / 2} 5 Q${e * 0.4} 6 0 0 Z`
+    return { path, viewBox: `0 0 ${e} 12`, longSize, orientation: 'left' }
+  }
+  const e = baseLength
+  const path = `M0 0 L12 0 Q6 ${e * 0.4} 7 ${e / 2} Q6 ${e * 0.6} 12 ${e} L0 ${e} Q6 ${e * 0.6} 5 ${e / 2} Q6 ${e * 0.4} 0 0 Z`
+  return { path, viewBox: `0 0 12 ${e}`, longSize, orientation: 'top' }
+}
+
+const EDGE_GEOMETRY: Record<Exclude<RiskEdge, 'none'>, EdgeGeometry> = {
+  short: buildEdgeGeometry('short'),
+  long: buildEdgeGeometry('long'),
+  left: buildEdgeGeometry('left'),
+}
+
+const ROOT_STYLE: CSSProperties = { aspectRatio: '7 / 9', height: 'var(--cell-h)' }
+
 const RISK_DATA_MAP = riskDataMap()
 const KEY_CODES = new Set(getKeyCodes())
 
 export default function Cell({
-  height = 45,
   className = '',
   riskCode,
   state = 'empty',
@@ -48,9 +88,8 @@ export default function Cell({
   const hasRisk = riskCode !== undefined
   const riskData = hasRisk ? RISK_DATA_MAP[riskCode] : undefined
   const image = hasRisk ? riskImages[riskCode!] : undefined
-  const edgeLength = hasRisk ?
-    EDGE_LENGTHS[riskData?.edge || 'none'] * height * .45 : 0
-  const showEdge = edgeLength > 0
+  const edge = riskData?.edge
+  const geometry = edge && edge !== 'none' ? EDGE_GEOMETRY[edge] : undefined
   const tooltip = hasRisk ? riskTooltips[riskCode!] : undefined
   const isKey = hasRisk && KEY_CODES.has(riskCode!)
 
@@ -66,7 +105,7 @@ export default function Cell({
     <div
       ref={rootRef}
       className={`relative shrink-0 ${clickable ? 'cursor-pointer' : ''} ${className}`}
-      style={{ aspectRatio: '7 / 9', height: `${height}px` }}
+      style={ROOT_STYLE}
       onClick={clickable && riskCode ? () => onClick?.(riskCode) : undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -102,7 +141,7 @@ export default function Cell({
               aria-hidden="true"
               draggable={false}
               className="absolute bottom-1 -left-2"
-              style={{ height: `${height * 0.22}px` }}
+              style={{ height: ICON_SIZE }}
             />
           </div>
         )}
@@ -110,36 +149,38 @@ export default function Cell({
           <Lock
             aria-hidden="true"
             className="pointer-events-none absolute right-1 top-1 text-white"
-            style={{ width: `${height * 0.22}px`, height: `${height * 0.22}px` }}
+            style={{ width: ICON_SIZE, height: ICON_SIZE }}
           />
         )}
       </div>
-      {showEdge && (
-        riskData?.edge === 'left' ? (
+      {geometry && (
+        geometry.orientation === 'left' ? (
           <svg
-            className="absolute left-0 top-1/2 -translate-x-[calc(100%+5px)] -translate-y-1/2"
-            width={edgeLength}
-            height={12}
-            viewBox={`0 0 ${edgeLength} 12`}
+            className="absolute left-0 top-1/2"
+            style={{
+              width: geometry.longSize,
+              height: THICKNESS_SIZE,
+              transform: `translate(calc(-100% - var(--cell-h) * ${EDGE_GAP_RATIO}), -50%)`,
+            }}
+            viewBox={geometry.viewBox}
+            preserveAspectRatio="none"
             aria-hidden="true"
           >
-            <path
-              d={`M0 0 L0 12 Q${edgeLength * 0.4} 6 ${edgeLength / 2} 7 Q${edgeLength * 0.6} 6 ${edgeLength} 12 L${edgeLength} 0 Q${edgeLength * 0.6} 6 ${edgeLength / 2} 5 Q${edgeLength * 0.4} 6 0 0 Z`}
-              fill="white"
-            />
+            <path d={geometry.path} fill="white" />
           </svg>
         ) : (
           <svg
-            className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[calc(100%+5px)]"
-            width={12}
-            height={edgeLength}
-            viewBox={`0 0 12 ${edgeLength}`}
+            className="absolute left-1/2 top-0"
+            style={{
+              width: THICKNESS_SIZE,
+              height: geometry.longSize,
+              transform: `translate(-50%, calc(-100% - var(--cell-h) * ${EDGE_GAP_RATIO}))`,
+            }}
+            viewBox={geometry.viewBox}
+            preserveAspectRatio="none"
             aria-hidden="true"
           >
-            <path
-              d={`M0 0 L12 0 Q6 ${edgeLength * 0.4} 7 ${edgeLength / 2} Q6 ${edgeLength * 0.6} 12 ${edgeLength} L0 ${edgeLength} Q6 ${edgeLength * 0.6} 5 ${edgeLength / 2} Q6 ${edgeLength * 0.4} 0 0 Z`}
-              fill="white"
-            />
+            <path d={geometry.path} fill="white" />
           </svg>
         )
       )}

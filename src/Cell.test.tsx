@@ -43,4 +43,28 @@ describe('Cell', () => {
     const imgs = container.querySelectorAll('img[alt=""]')
     expect(imgs.length).toBeGreaterThan(0)
   })
+
+  it('sizes the root from the --cell-h CSS variable', () => {
+    const { container } = render(<Cell riskCode="000000000000001" />)
+    const root = container.firstChild as HTMLElement
+    expect(root.style.height).toBe('var(--cell-h)')
+    expect(root.style.aspectRatio).toBe('7 / 9')
+  })
+
+  it('sizes the lock icon from --cell-h via calc', () => {
+    const { container } = render(<Cell riskCode="000000000000001" state="locked" />)
+    const lock = container.querySelector('svg.lucide-lock') as HTMLElement
+    expect(lock.style.width).toContain('calc(var(--cell-h)')
+    expect(lock.style.height).toContain('calc(var(--cell-h)')
+  })
+
+  it('renders an edge svg sized from --cell-h via calc', () => {
+    // '000000000000002' has edge 'short'; for an unselected cell the edge svg
+    // is the only svg without the lucide-lock class.
+    const { container } = render(<Cell riskCode="000000000000002" />)
+    const svg = container.querySelector('svg:not(.lucide-lock)') as SVGElement
+    expect(svg).toBeInTheDocument()
+    expect(svg.getAttribute('viewBox')).not.toBeNull()
+    expect(svg.style.height).toContain('calc(var(--cell-h)')
+  })
 })
