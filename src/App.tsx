@@ -206,13 +206,13 @@ function App() {
   }, [])
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center-safe gap-6 px-4 py-8 sm:px-8 sm:py-12 lg:px-20">
+    <main className="relative flex min-h-svh flex-col items-center justify-center-safe gap-6 px-4 py-8 sm:px-8 sm:py-2 lg:px-20">
       <a
         href="https://github.com/GabrielVD/cc-randomizer"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="GitHub"
-        className="fixed top-4 right-4 flex cursor-pointer items-center opacity-50 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:top-6 sm:right-6"
+        className="absolute top-4 right-4 flex cursor-pointer items-center opacity-50 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:top-6 sm:right-6"
       >
         <img
           src={githubIcon}
@@ -350,18 +350,20 @@ function App() {
         <Tooltip id={shareTooltipId} content="Share a link to this setup" triggerRef={shareButtonRef} />
       )}
       <div className={`flex flex-col items-center gap-2 ${risk ? 'visible' : 'invisible'}`}>
+        <div className="flex h-1 items-center">
+          {copyStatus === 'copied' && (
+            <span
+              role="status"
+              className="-translate-y-1 flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-white"
+            >
+              <Check className="h-5 w-5" />
+              Copied!
+            </span>
+          )}
+        </div>
         <p className="m-0 font-mono text-xl tracking-wider text-white">
           {risk?.code ?? '\u00A0'}
         </p>
-        {copyStatus === 'copied' && (
-          <span
-            role="status"
-            className="flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-white"
-          >
-            <Check className="h-5 w-5" />
-            Copied!
-          </span>
-        )}
         <p className="m-0 text-sm text-white/70">
           {risk ? `Level ${risk.level}` : '\u00A0'}
         </p>
