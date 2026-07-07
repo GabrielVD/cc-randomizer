@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import App from './App'
 import { encodeSettings } from './share'
 
@@ -98,5 +98,22 @@ describe('App', () => {
     render(<App />)
     expect(screen.getByRole('button', { name: 'Hard' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('switch', { name: 'Key' })).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('processes rapid clicks sequentially through the state loop', () => {
+    const { container } = render(<App />)
+    const img = container.querySelector('img[alt="000000000000001"]')!
+    const cell = img.closest('div[style*="aspect-ratio"]') as HTMLElement
+
+    // Two clicks in one batch = two queued events against one committed snapshot.
+    // With the reducer, each dispatch runs against the result of the previous
+    // one, so unselected -> banned -> locked.
+    act(() => {
+      cell.click()
+      cell.click()
+    })
+
+    // unselected -> banned -> locked: lock icon visible, no ban styling
+    expect(cell.querySelector('.lucide-lock')).toBeInTheDocument()
   })
 })

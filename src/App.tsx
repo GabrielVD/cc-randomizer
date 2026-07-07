@@ -1,16 +1,10 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useReducer, useRef, useState } from 'react'
 import { Check, RotateCcw, Share2 } from 'lucide-react'
 import RiskGrid from './RiskGrid'
-import { type CellState } from './Cell'
-import { findRiskGroup, getKeyAndExtraCodes, getKeyCodes } from './risks'
-import {
-  addRiskToCode,
-  generateCode,
-  removeRiskFromCode,
-  type Difficulty,
-  type GeneratedRisk,
-} from './generateCode'
-import { buildShareUrl, copyText, readShareSettingsFromHash, shareOrCopyUrl, type ShareSettings } from './share'
+import { cellsReducer, computeLockedConflictSet, initialCellsState } from './cellStateReducer'
+import { getKeyAndExtraCodes } from './risks'
+import { generateCode, type Difficulty } from './generateCode'
+import { buildShareUrl, copyText, readShareSettingsFromHash, shareOrCopyUrl } from './share'
 import Tooltip from './Tooltip'
 import KofiButton from './KofiButton'
 import githubIcon from './assets/github.svg'
@@ -22,12 +16,11 @@ const DIFFICULTIES: { key: Difficulty; label: string }[] = [
 ]
 
 function App() {
-  const [initialSettings] = useState(readShareSettingsFromHash)
-  const [difficulty, setDifficulty] = useState<Difficulty>(initialSettings?.difficulty ?? 'normal')
-  const [risk, setRisk] = useState<GeneratedRisk | null>(null)
-  const [useKey, setUseKey] = useState(initialSettings?.useKey ?? true)
-  const [lockedCodes, setLockedCodes] = useState<string[]>(initialSettings?.lockedCodes ?? [])
-  const [bannedCodes, setBannedCodes] = useState<string[]>(initialSettings?.bannedCodes ?? [])
+  const [state, dispatch] = useReducer(
+    cellsReducer,
+    undefined,
+    () => initialCellsState(readShareSettingsFromHash()),
+  )
   const [shareStatus, setShareStatus] = useState<'idle' | 'shared' | 'copied'>('idle')
   const shareTimerRef = useRef<number | null>(null)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
@@ -39,166 +32,55 @@ function App() {
   const resetTooltipId = useId()
   const shareTooltipId = useId()
 
-  const keyCodesSet = useMemo(() => new Set(getKeyCodes()), [])
   const keyExtraCodesSet = useMemo(() => new Set(getKeyAndExtraCodes()), [])
 
-  const lockedConflictSet = useMemo(() => {
-    const set = new Set<string>()
-    const lockedSet = new Set(lockedCodes)
-    for (const lockedCode of lockedCodes) {
-      const group = findRiskGroup(lockedCode)
-      if (!group) continue
-      for (const r of group.risks) {
-        if (r.code !== lockedCode && !lockedSet.has(r.code) && !keyCodesSet.has(r.code)) {
-          set.add(r.code)
-        }
-      }
-    }
-    return set
-  }, [lockedCodes, keyCodesSet])
+  const lockedConflictSet = useMemo(
+    () => computeLockedConflictSet(state.lockedCodes),
+    [state.lockedCodes],
+  )
 
-  const handleCellClick = useCallback((code: string) => {
-    if (!useKey && keyExtraCodesSet.has(code)) return
-
-    const lockedSet = new Set(lockedCodes)
-    const bannedSet = new Set(bannedCodes)
-    const pickSet = new Set(risk?.picks)
-    const conflictSet = new Set(risk?.conflicts)
-
-    let currentState: CellState
-    if (lockedSet.has(code)) currentState = 'locked'
-    else if (lockedConflictSet.has(code)) currentState = 'conflict'
-    else if (bannedSet.has(code)) currentState = 'banned'
-    else if (pickSet.has(code)) currentState = 'selected'
-    else if (conflictSet.has(code)) currentState = 'conflict'
-    else currentState = 'unselected'
-
-    if (keyCodesSet.has(code)) {
-      if (currentState === 'conflict') return
-      if (currentState === 'locked') {
-        const newLocked = new Set(lockedSet)
-        newLocked.delete(code)
-        let newRisk = risk
-        if (newRisk && !pickSet.has(code)) {
-          newRisk = addRiskToCode(newRisk, code)
-        }
-        setLockedCodes([...newLocked])
-        setRisk(newRisk)
-        return
-      }
-      const group = findRiskGroup(code)
-      const otherKeyCodes = group?.risks
-        .filter(r => r.code !== code)
-        .map(r => r.code) ?? []
-      const newLocked = new Set(lockedSet)
-      const newBanned = new Set(bannedSet)
-      let newRisk = risk
-      newLocked.add(code)
-      for (const c of otherKeyCodes) {
-        newLocked.delete(c)
-        newBanned.delete(c)
-      }
-      if (newRisk) {
-        for (const c of otherKeyCodes) {
-          if (pickSet.has(c)) newRisk = removeRiskFromCode(newRisk, c)
-        }
-        if (!pickSet.has(code)) newRisk = addRiskToCode(newRisk, code)
-      }
-      setLockedCodes([...newLocked])
-      setBannedCodes([...newBanned])
-      setRisk(newRisk)
-      return
-    }
-
-    let newState: CellState
-    if (currentState === 'unselected' || currentState === 'selected') newState = 'banned'
-    else if (currentState === 'banned') newState = 'locked'
-    else if (currentState === 'locked') newState = 'unselected'
-    else return
-
-    const newLocked = new Set(lockedSet)
-    const newBanned = new Set(bannedSet)
-    let newRisk = risk
-
-    const group = findRiskGroup(code)
-    const otherGroupCodes = group?.risks
-      .filter(r => r.code !== code)
-      .map(r => r.code) ?? []
-
-    if (newState === 'banned') {
-      newBanned.add(code)
-      if (currentState === 'selected' && newRisk) {
-        newRisk = removeRiskFromCode(newRisk, code)
-        newRisk = {
-          ...newRisk,
-          conflicts: newRisk.conflicts.filter(c => !otherGroupCodes.includes(c)),
-        }
-      }
-    } else if (newState === 'locked') {
-      newBanned.delete(code)
-      newLocked.add(code)
-      for (const c of otherGroupCodes) {
-        newBanned.delete(c)
-      }
-      if (newRisk) {
-        for (const c of otherGroupCodes) {
-          if (pickSet.has(c)) {
-            newRisk = removeRiskFromCode(newRisk, c)
-          }
-        }
-        newRisk = addRiskToCode(newRisk, code)
-      }
-    } else {
-      // locked → unselected
-      newLocked.delete(code)
-      if (newRisk) {
-        newRisk = removeRiskFromCode(newRisk, code)
-        newRisk = {
-          ...newRisk,
-          conflicts: newRisk.conflicts.filter(c => !otherGroupCodes.includes(c)),
-        }
-      }
-    }
-
-    setLockedCodes([...newLocked])
-    setBannedCodes([...newBanned])
-    setRisk(newRisk)
-  }, [lockedCodes, bannedCodes, risk, lockedConflictSet, useKey, keyCodesSet, keyExtraCodesSet])
+  const handleCellClick = useCallback(
+    (code: string) => dispatch({ type: 'cellClick', code }),
+    [],
+  )
 
   const handleShare = useCallback(async () => {
-    const url = buildShareUrl({ difficulty, useKey, lockedCodes, bannedCodes })
+    const url = buildShareUrl({
+      difficulty: state.difficulty,
+      useKey: state.useKey,
+      lockedCodes: state.lockedCodes,
+      bannedCodes: state.bannedCodes,
+    })
     const result = await shareOrCopyUrl(url)
     if (result === 'aborted' || result === 'failed') return
     setShareStatus(result)
     if (shareTimerRef.current !== null) window.clearTimeout(shareTimerRef.current)
     shareTimerRef.current = window.setTimeout(() => setShareStatus('idle'), 1500)
-  }, [difficulty, useKey, lockedCodes, bannedCodes])
+  }, [state.difficulty, state.useKey, state.lockedCodes, state.bannedCodes])
 
   const handleRandomize = useCallback(async () => {
-    const generated = generateCode({ difficulty, useKey, locked: lockedCodes, banned: bannedCodes })
-    setRisk(generated)
+    const generated = generateCode({
+      difficulty: state.difficulty,
+      useKey: state.useKey,
+      locked: state.lockedCodes,
+      banned: state.bannedCodes,
+    })
+    dispatch({ type: 'setRisk', risk: generated })
     if (await copyText(generated.code) !== 'copied') return
     setCopyStatus('copied')
     if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current)
     copyTimerRef.current = window.setTimeout(() => setCopyStatus('idle'), 1500)
-  }, [difficulty, useKey, lockedCodes, bannedCodes])
+  }, [state.difficulty, state.useKey, state.lockedCodes, state.bannedCodes])
 
-  const applyShareSettings = useCallback((settings: ShareSettings) => {
-    setDifficulty(settings.difficulty)
-    setUseKey(settings.useKey)
-    setLockedCodes(settings.lockedCodes)
-    setBannedCodes(settings.bannedCodes)
-    setRisk(null)
+  const handleHashChange = useCallback(() => {
+    const settings = readShareSettingsFromHash()
+    if (settings) dispatch({ type: 'applyShareSettings', settings })
   }, [])
 
   useEffect(() => {
-    const onHashChange = () => {
-      const settings = readShareSettingsFromHash()
-      if (settings) applyShareSettings(settings)
-    }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [applyShareSettings])
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [handleHashChange])
 
   useEffect(() => () => {
     if (shareTimerRef.current !== null) window.clearTimeout(shareTimerRef.current)
@@ -229,18 +111,18 @@ function App() {
         </p>
       </header>
       <RiskGrid
-        picks={risk?.picks}
-        conflicts={risk?.conflicts}
-        lockedCodes={lockedCodes}
-        bannedCodes={bannedCodes}
+        picks={state.risk?.picks}
+        conflicts={state.risk?.conflicts}
+        lockedCodes={state.lockedCodes}
+        bannedCodes={state.bannedCodes}
         lockedConflictSet={lockedConflictSet}
-        useKey={useKey}
+        useKey={state.useKey}
         keyExtraCodes={keyExtraCodesSet}
         onCellClick={handleCellClick}
       />
       <div className="flex gap-2" role="group" aria-label="Difficulty">
         {DIFFICULTIES.map(({ key, label }) => {
-          const selected = key === difficulty
+          const selected = key === state.difficulty
           return (
             <button
               key={key}
@@ -252,10 +134,7 @@ function App() {
                   ? 'bg-white text-black hover:bg-white/90'
                   : 'bg-white/10 text-white/70 hover:bg-white/20',
               ].join(' ')}
-              onClick={() => {
-                setDifficulty(key)
-                setRisk(null)
-              }}
+              onClick={() => dispatch({ type: 'setDifficulty', difficulty: key })}
             >
               {label}
             </button>
@@ -267,27 +146,18 @@ function App() {
         <button
           type="button"
           role="switch"
-          aria-checked={useKey}
+          aria-checked={state.useKey}
           aria-label="Key"
           className={[
             'relative h-6 w-11 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
-            useKey ? 'bg-key' : 'bg-white/20',
+            state.useKey ? 'bg-key' : 'bg-white/20',
           ].join(' ')}
-          onClick={() => {
-            const next = !useKey
-            setUseKey(next)
-            setRisk(null)
-            if (!next) {
-              const keyExtra = keyExtraCodesSet
-              setLockedCodes(prev => prev.filter(c => !keyExtra.has(c)))
-              setBannedCodes(prev => prev.filter(c => !keyExtra.has(c)))
-            }
-          }}
+          onClick={() => dispatch({ type: 'toggleKey' })}
         >
           <span
             className={[
               'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform',
-              useKey ? 'translate-x-5' : 'translate-x-0',
+              state.useKey ? 'translate-x-5' : 'translate-x-0',
             ].join(' ')}
           />
         </button>
@@ -302,11 +172,7 @@ function App() {
             className="flex cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             onMouseEnter={() => setResetHovered(true)}
             onMouseLeave={() => setResetHovered(false)}
-            onClick={() => {
-              setRisk(null)
-              setLockedCodes([])
-              setBannedCodes([])
-            }}
+            onClick={() => dispatch({ type: 'reset' })}
           >
             <RotateCcw className="h-7 w-7" />
           </button>
@@ -349,7 +215,7 @@ function App() {
       {shareHovered && shareStatus === 'idle' && (
         <Tooltip id={shareTooltipId} content="Share a link to this setup" triggerRef={shareButtonRef} />
       )}
-      <div className={`flex flex-col items-center gap-2 ${risk ? 'visible' : 'invisible'}`}>
+      <div className={`flex flex-col items-center gap-2 ${state.risk ? 'visible' : 'invisible'}`}>
         <div className="flex h-1 items-center">
           {copyStatus === 'copied' && (
             <span
@@ -362,10 +228,10 @@ function App() {
           )}
         </div>
         <p className="m-0 font-mono text-xl tracking-wider text-white">
-          {risk?.code ?? '\u00A0'}
+          {state.risk?.code ?? '\u00A0'}
         </p>
         <p className="m-0 text-sm text-white/70">
-          {risk ? `Level ${risk.level}` : '\u00A0'}
+          {state.risk ? `Level ${state.risk.level}` : '\u00A0'}
         </p>
       </div>
       <div className="self-center sm:fixed sm:bottom-6 sm:right-6 sm:z-50">

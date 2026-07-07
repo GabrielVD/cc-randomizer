@@ -20,6 +20,11 @@ const RESISTANCE = 0.35
 const SAMPLE_WINDOW_MS = 100
 const MAX_VELOCITY = 40 // px/frame; clamp flicks to a sane speed
 
+// Drag slop: presses that move less than this many px horizontally are clicks,
+// not drags. Must be large enough to absorb hand wobble during rapid clicking
+// (measured up to ~5px per press); matches typical platform touch slop (8px).
+const DRAG_SLOP_PX = 8
+
 type Sample = { t: number; x: number }
 
 type State = {
@@ -181,7 +186,7 @@ export function useDragScroll() {
       const s = stateRef.current
       if (!s.active || e.pointerId !== s.pointerId) return
       const delta = s.startX - e.clientX
-      if (!s.moved && Math.abs(delta) < 3) return
+      if (!s.moved && Math.abs(delta) < DRAG_SLOP_PX) return
       if (!s.moved) {
         const container = containerRef.current
         container?.setPointerCapture(s.pointerId)
