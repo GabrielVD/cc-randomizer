@@ -113,7 +113,7 @@ export default function Cell({
     >
       <div className={`absolute inset-0 rounded-md transition-[background-color,opacity] ${STATE_STYLES[state]} ${dimmed ? 'opacity-30' : ''}`}>
         {hasRisk && (
-          <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-md p-1">
+          <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-md p-3.5">
             {image ? (
               <img
                 src={image}
