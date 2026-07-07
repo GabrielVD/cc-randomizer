@@ -1,5 +1,9 @@
 # CC Randomizer
 
+[![Production](https://img.shields.io/badge/production-live-brightgreen?logo=vercel)](https://cc-randomizer-ake.vercel.app/)
+[![CI/CD](https://github.com/GabrielVD/cc-randomizer/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/GabrielVD/cc-randomizer/actions/workflows/ci-cd.yml)
+[![License](https://img.shields.io/github/license/GabrielVD/cc-randomizer)](./LICENSE)
+
 A community tool for generating randomized Contingency Contract Test Criteria for **Arknights: Endfield**.
 
 ![CC Randomizer screenshot](./docs/screenshot.png)
