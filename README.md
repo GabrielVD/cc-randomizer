@@ -4,6 +4,8 @@ A community tool for generating randomized Contingency Contract Test Criteria fo
 
 ![CC Randomizer screenshot](./docs/screenshot.png)
 
+[Live link](https://cc-randomizer-ake.vercel.app/)
+
 ## About
 
 Contingency Contract (CC) is a challenge mode where players play under Test Criteria of their choice, a set of modifiers (Risks) that increase the difficulty. A Risk set is encoded as a 15-character Crockford's Base32 string that can be imported directly into the game.
