@@ -169,12 +169,12 @@ function App() {
             aria-label="Reset"
             aria-describedby={resetHovered ? resetTooltipId : undefined}
             ref={resetButtonRef}
-            className="flex cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            onMouseEnter={() => setResetHovered(true)}
-            onMouseLeave={() => setResetHovered(false)}
-            onClick={() => dispatch({ type: 'reset' })}
-          >
-            <RotateCcw className="h-7 w-7" />
+              className="flex cursor-pointer items-center gap-2 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              onMouseEnter={() => setResetHovered(true)}
+              onMouseLeave={() => setResetHovered(false)}
+              onClick={() => dispatch({ type: 'reset' })}
+            >
+              <RotateCcw className="h-7 w-7" />
           </button>
         </div>
         <button
@@ -191,7 +191,7 @@ function App() {
               aria-label="Share"
               aria-describedby={shareHovered ? shareTooltipId : undefined}
               ref={shareButtonRef}
-              className="flex cursor-pointer items-center gap-2 text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="flex cursor-pointer items-center gap-2 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               onMouseEnter={() => setShareHovered(true)}
               onMouseLeave={() => setShareHovered(false)}
               onClick={handleShare}
