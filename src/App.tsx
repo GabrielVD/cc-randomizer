@@ -39,6 +39,8 @@ function App() {
     [state.lockedCodes],
   )
 
+  const canReset = state.risk !== null || state.lockedCodes.length > 0 || state.bannedCodes.length > 0
+
   const handleCellClick = useCallback(
     (code: string) => dispatch({ type: 'cellClick', code }),
     [],
@@ -164,18 +166,23 @@ function App() {
       </label>
       <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-5">
         <div className="flex justify-self-end">
-          <button
-            type="button"
-            aria-label="Reset"
-            aria-describedby={resetHovered ? resetTooltipId : undefined}
-            ref={resetButtonRef}
+          {canReset && (
+            <button
+              type="button"
+              aria-label="Reset"
+              aria-describedby={resetHovered ? resetTooltipId : undefined}
+              ref={resetButtonRef}
               className="flex cursor-pointer items-center gap-2 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               onMouseEnter={() => setResetHovered(true)}
               onMouseLeave={() => setResetHovered(false)}
-              onClick={() => dispatch({ type: 'reset' })}
+              onClick={() => {
+                dispatch({ type: 'reset' })
+                setResetHovered(false)
+              }}
             >
               <RotateCcw className="h-7 w-7" />
-          </button>
+            </button>
+          )}
         </div>
         <button
           type="button"
@@ -209,7 +216,7 @@ function App() {
           )}
         </div>
       </div>
-      {resetHovered && (
+      {canReset && resetHovered && (
         <Tooltip id={resetTooltipId} content="Reset all cells" triggerRef={resetButtonRef} />
       )}
       {shareHovered && shareStatus === 'idle' && (

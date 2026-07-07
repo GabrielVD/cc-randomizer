@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import App from './App'
 import { encodeSettings } from './share'
 
@@ -74,6 +75,11 @@ describe('App', () => {
     expect(keySwitch).toHaveAttribute('aria-checked', 'true')
   })
 
+  it('does not render the Reset button when there is nothing to reset', () => {
+    render(<App />)
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument()
+  })
+
   it('clears selections when Reset is clicked', async () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: 'Randomize' }))
@@ -82,6 +88,28 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
     // After reset the code paragraph holds a non-breaking space, not a code.
     expect(screen.queryByText(/^[0-9A-Z]{15}$/)).not.toBeInTheDocument()
+  })
+
+  it('does not show the Reset tooltip again after reset until re-hovered', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize' }))
+    await screen.findByText(/^[0-9A-Z]{15}$/)
+
+    const resetButton = screen.getByRole('button', { name: 'Reset' })
+    await user.hover(resetButton)
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Reset all cells')
+
+    await user.click(resetButton)
+    // Button is gone, and tooltip should not linger.
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+
+    // Re-randomize brings the button back; tooltip must not reappear on its own.
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize' }))
+    await screen.findByText(/^[0-9A-Z]{15}$/)
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument()
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 
   it('applies settings from the URL hash on mount', () => {
